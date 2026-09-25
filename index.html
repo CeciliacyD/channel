@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cecilia · 温柔手账小天地</title>
+    <!-- 谷歌字体：手写花体、衬线、中文 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;600&family=Quicksand:wght@300;400;500&family=Noto+Serif+SC:wght@300;400&family=Noto+Sans+SC:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* 奶油手账日间配色：极浅粉白与低饱和玫瑰灰 */
+            --cream-bg: #fff8f9;
+            --paper: #fffdfd;
+            --text-main: #494444;
+            --text-light: #756d6e;
+            --soft-blue: #8e6670;
+            --soft-pink: #eadde1;
+            --border-line: #eee5e7;
+            --shadow-soft: 0 4px 16px rgba(170,140,148,0.07);
+        }
+        [data-theme="dark"] {
+            /* 暗模式保留低饱和玫瑰灰调性 */
+            --cream-bg: #343032;
+            --paper: #423d3f;
+            --text-main: #e9e3e3;
+            --text-light: #b4a9a9;
+            --soft-blue: #d7aeb7;
+            --soft-pink: #d8b9be;
+            --border-line: #585052;
+            --shadow-soft: 0 4px 16px rgba(0,0,0,0.25);
+        }
+        * {margin:0;padding:0;box-sizing:border-box;}
+        html {scroll-behavior:smooth;}
+        body {
+            font-family: 'Noto Sans SC','Quicksand',sans-serif;
+            background-color: var(--cream-bg);
+            color: var(--text-main);
+            line-height:1.75;
+            font-weight:300;
+            /* 纸张肌理背景 */
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23eadde1' fill-opacity='0.2' fill-rule='evenodd'/%3E%3C/svg%3E");
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+        .handwritten {font-family: 'Dancing Script',cursive;font-weight:400;}
+        .edit-mode [contenteditable="true"]:hover {outline:1px dashed var(--soft-blue);outline-offset:3px;cursor:text;}
+        .edit-mode [contenteditable="true"]:focus {outline:1px solid var(--soft-blue);outline-offset:3px;}
+        .edit-tip {
+            position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+            background:var(--soft-blue);color:#fff;padding:7px 18px;border-radius:99px;
+            font-size:0.82rem;z-index:999;display:none;max-width:calc(100vw - 28px);text-align:center;
+        }
+        .edit-mode .edit-tip {display:block;}
+        [data-theme="dark"] .edit-tip {color:#343032;}
+        .toast {
+            position:fixed;bottom:68px;left:50%;transform:translateX(-50%);z-index:1200;
+            max-width:calc(100vw - 28px);padding:9px 16px;border-radius:12px;background:#78616a;
+            color:#fff;font-size:.88rem;box-shadow:var(--shadow-soft);text-align:center;
+        }
+        .toast.error {background:#9a5757;}
+        .collection-actions {display:none;justify-content:center;gap:10px;margin:-26px 0 28px;}
+        .edit-mode .collection-actions {display:flex;}
+        .soft-button,.modal-button {
+            border:1px solid var(--border-line);border-radius:10px;padding:8px 15px;
+            background:var(--paper);color:var(--text-main);font:inherit;cursor:pointer;
+        }
+        .soft-button:hover,.modal-button:hover {border-color:var(--soft-pink);}
+        .work-card,.journal-item {cursor:pointer;}
+        .edit-mode .work-card,.edit-mode .journal-item {cursor:default;}
+        .entry-date {color:var(--soft-blue);font-family:'Quicksand',sans-serif;font-size:.82rem;margin-bottom:6px;}
+        .entry-tags {margin-top:8px;}
+        .entry-card-actions {display:none;gap:8px;margin-top:12px;}
+        .edit-mode .entry-card-actions {display:flex;}
+        .entry-card-actions button {border:1px solid var(--border-line);border-radius:8px;padding:4px 10px;background:var(--cream-bg);color:var(--text-main);font:inherit;font-size:.82rem;cursor:pointer;}
+        .entry-card-actions .entry-delete {color:#a24d58;}
+        .audio-status {position:fixed;right:18px;bottom:18px;z-index:998;padding:8px 12px;border-radius:10px;background:var(--paper);border:1px solid var(--border-line);color:var(--text-light);font-size:.8rem;max-width:calc(100vw - 36px);box-shadow:var(--shadow-soft);}
+        .dialog-backdrop {position:fixed;inset:0;z-index:1500;background:rgba(46,39,41,.52);display:flex;align-items:center;justify-content:center;padding:20px;}
+        .dialog-backdrop[hidden] {display:none;}
+        .dialog-panel {position:relative;width:min(680px,100%);max-height:min(88vh,900px);overflow:auto;padding:34px;background:var(--paper);border:1px solid var(--border-line);border-radius:18px;box-shadow:0 18px 60px rgba(0,0,0,.2);}
+        /* 作品 / 随笔详情采用真正铺满视口的页面层；密码框仍保留居中小弹窗 */
+        #entryModal.dialog-backdrop {padding:0;align-items:stretch;}
+        #entryModal .dialog-panel {width:100vw;height:100vh;height:100dvh;max-width:none;max-height:none;padding:clamp(54px,8vh,88px) clamp(22px,8vw,96px) 40px;border:0;border-radius:0;box-shadow:none;}
+        #entryModal #entryDetail,#entryModal .dialog-form {max-width:760px;margin:0 auto;}
+        #entryModal .dialog-close {position:fixed;top:18px;right:20px;z-index:2;}
+        @media(max-width:768px){#entryModal .dialog-panel {padding:62px 20px 26px;}}
+        .dialog-close {position:absolute;right:16px;top:12px;border:0;background:transparent;color:var(--text-light);font-size:1.6rem;cursor:pointer;line-height:1;}
+        .dialog-panel h2 {font:400 1.5rem 'Noto Serif SC',serif;margin:4px 30px 8px 0;}
+        .dialog-copy {white-space:pre-wrap;color:var(--text-light);margin:22px 0;overflow-wrap:anywhere;}
+        .dialog-actions {display:flex;flex-wrap:wrap;gap:10px;margin-top:20px;}
+        .dialog-actions .primary {background:var(--soft-pink);border-color:var(--soft-pink);}
+        .dialog-actions .danger {color:#a24d58;}
+        .dialog-form label {display:block;margin:12px 0 5px;color:var(--text-light);font-size:.88rem;}
+        .dialog-form input,.dialog-form textarea,.password-form input {width:100%;border:1px solid var(--border-line);border-radius:10px;padding:10px 12px;background:var(--cream-bg);color:var(--text-main);font:inherit;}
+        .dialog-form textarea {min-height:100px;resize:vertical;}
+        .dialog-form textarea[name="body"] {min-height:190px;}
+        .password-form {margin-top:20px;}
+        .password-error {min-height:1.5em;margin-top:8px;color:#a24d58;font-size:.88rem;}
+        .file-input {display:none;}
+        .entry-card:focus-visible {outline:2px solid var(--soft-blue);outline-offset:3px;}
+        body.dialog-open {overflow:hidden;}
+        @media(max-width:768px){
+            .dialog-backdrop {padding:10px;align-items:flex-end;}
+            .dialog-panel {padding:28px 20px 22px;max-height:92vh;border-radius:18px 18px 12px 12px;}
+            .collection-actions {margin-top:-24px;}
+            .audio-status {bottom:64px;left:50%;right:auto;transform:translateX(-50%);}
+        }
+        .container {max-width:980px;margin:0 auto;padding:0 32px;}
+        .section-title {
+            font-family:'Noto Serif SC',serif;font-size:1.9rem;font-weight:400;text-align:center;
+            margin-bottom:52px;position:relative;
+        }
+        .section-title::after {
+            content:"";position:absolute;bottom:-10px;left:50%;transform:translateX(-50%);
+            width:48px;height:1px;background:var(--soft-pink);
+        }
+        /* Nav */
+        nav {
+            position:fixed;top:0;width:100%;z-index:100;padding:20px 0;
+            backdrop-filter:blur(10px);background:rgba(255,248,249,0.86);
+            transition:all 0.3s;
+        }
+        [data-theme="dark"] nav {background:rgba(52,48,50,0.72);}
+        .nav-wrap {display:flex;justify-content:space-between;align-items:center;}
+        .nav-logo {font-family:'Dancing Script',cursive;font-size:1.7rem;color:var(--text-main);text-decoration:none;}
+        .nav-links {display:flex;gap:30px;list-style:none;}
+        .nav-links a {color:var(--text-light);text-decoration:none;font-size:0.9rem;transition:color 0.3s;position:relative;}
+        .nav-links a:hover {color:var(--soft-blue);}
+        .nav-links a::after {content:"";position:absolute;bottom:-3px;left:0;width:0;height:1px;background:var(--soft-blue);transition:width 0.3s;}
+        .nav-links a:hover::after {width:100%;}
+        .nav-actions {display:flex;gap:14px;align-items:center;}
+        .icon-btn {background:none;border:none;color:var(--text-light);cursor:pointer;font-size:1.1rem;padding:4px;transition:color 0.3s;}
+        .icon-btn:hover {color:var(--soft-blue);}
+        .icon-btn.active {color:var(--soft-blue);}
+        /* Hero首页 手账手绘区域 */
+        #home {
+            min-height:100vh;display:flex;align-items:center;justify-content:center;
+            position:relative;padding-top:70px;
+        }
+        .hero-card {
+            background:var(--paper);box-shadow:var(--shadow-soft);border-radius:18px;
+            padding:60px 48px;max-width:680px;text-align:center;
+            border:1px solid var(--border-line);position:relative;
+        }
+        /* 手绘小猫装饰svg */
+        .hand-doodle-cat {
+            position:absolute;right:-24px;bottom:-16px;width:90px;opacity:0.22;pointer-events:none;
+        }
+        .hand-doodle-star {
+            position:absolute;left:-16px;top:20px;width:42px;opacity:0.24;pointer-events:none;
+        }
+        .hero-title {font-family:'Dancing Script',cursive;font-size:4.6rem;margin-bottom:12px;color:var(--text-main);line-height:1.1;}
+        .hero-divider {width:70px;height:1px;background:var(--soft-pink);margin:18px auto 24px;}
+        .hero-subtitle {font-size:1.1rem;color:var(--text-light);letter-spacing:1px;margin-bottom:22px;}
+        .hero-desc {color:var(--text-light);font-size:0.96rem;line-height:1.8;}
+        .scroll-down {position:absolute;bottom:36px;left:50%;transform:translateX(-50%);color:var(--text-light);font-size:0.82rem;animation:bounce 2s infinite;}
+        @keyframes bounce {0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(7px);}}
+        /* About */
+        #about {padding:110px 0;}
+        .tab-buttons {display:flex;justify-content:center;gap:36px;margin-bottom:40px;}
+        .tab-btn {border:none;background:none;color:var(--text-light);font-family:'Noto Serif SC',serif;font-size:1rem;padding:6px 0;cursor:pointer;position:relative;}
+        .tab-btn.active {color:var(--text-main);}
+        .tab-btn.active::after {content:"";position:absolute;bottom:0;left:0;width:100%;height:1px;background:var(--soft-pink);}
+        .about-container {display:grid;grid-template-columns:1fr 2fr;gap:50px;align-items:start;}
+        .avatar-box {
+            width:100%;aspect-ratio:3/4;background:var(--paper);border-radius:14px;
+            box-shadow:var(--shadow-soft);border:1px solid var(--border-line);
+            display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;
+            background-size:cover;background-position:center;
+        }
+        .avatar-box span {font-family:'Dancing Script',cursive;font-size:2rem;color:var(--text-light);}
+        .text-block h3 {font-size:1.3rem;margin-bottom:16px;font-family:'Noto Serif SC',serif;}
+        .text-block p {color:var(--text-light);margin-bottom:14px;font-size:0.95rem;}
+        .tag-group {display:flex;flex-wrap:wrap;gap:9px;margin-top:26px;}
+        .tag {padding:4px 12px;background:rgba(233,210,214,0.25);color:var(--text-main);border-radius:99px;font-size:0.78rem;}
+        [data-theme="dark"] .tag {background:rgba(216,185,190,0.14);}
+        [data-theme="dark"] .work-tag {background:rgba(216,185,190,0.16);color:#ead1d5;}
+        .tab-pane {display:none;}
+        .tab-pane.active {display:block;}
+        /* Works */
+        #works {padding:110px 0;background:rgba(255,255,255,0.2);}
+        [data-theme="dark"] #works {background:rgba(0,0,0,0.08);}
+        .works-grid {display:grid;grid-template-columns:1fr 1fr;gap:26px;}
+        .work-card {
+            background:var(--paper);border:1px solid var(--border-line);border-radius:14px;
+            padding:28px;box-shadow:var(--shadow-soft);transition:transform 0.3s ease;
+        }
+        .work-card:hover {transform:translateY(-4px);}
+        .work-card h4 {font-family:'Noto Serif SC',serif;font-size:1.15rem;margin-bottom:10px;}
+        .work-card p {color:var(--text-light);font-size:0.9rem;margin-bottom:14px;}
+        .work-tag {display:inline-block;padding:2px 7px;font-size:0.74rem;background:rgba(233,210,214,0.35);color:#805c65;border-radius:4px;margin-right:5px;}
+        /* Journal随笔 */
+        #journal {padding:110px 0;}
+        .journal-list {max-width:720px;margin:0 auto;}
+        .journal-item {padding:26px 0;border-bottom:1px dashed var(--border-line);}
+        .journal-date {font-size:0.8rem;color:var(--soft-blue);margin-bottom:6px;font-family:'Quicksand';}
+        .journal-title {font-family:'Noto Serif SC',serif;font-size:1.12rem;margin-bottom:8px;cursor:pointer;}
+        .journal-excerpt {color:var(--text-light);font-size:0.9rem;}
+        /* Private私密日记 */
+        #private-journal {padding:110px 0;background:rgba(255,255,255,0.2);}
+        [data-theme="dark"] #private-journal {background:rgba(0,0,0,0.08);}
+        .private-lock-box {
+            max-width:420px;margin:0 auto;text-align:center;padding:36px;background:var(--paper);
+            border-radius:14px;border:1px solid var(--border-line);box-shadow:var(--shadow-soft);
+        }
+        .private-lock-box h3 {font-family:'Noto Serif SC',serif;font-size:1.25rem;margin-bottom:18px;}
+        .private-lock-box input {
+            width:100%;padding:10px 14px;border:1px solid var(--border-line);border-radius:10px;
+            background:var(--cream-bg);color:var(--text-main);margin-bottom:14px;outline:none;
+        }
+        .private-lock-box input:focus {border-color:var(--soft-pink);}
+        .private-lock-box button {
+            padding:8px 22px;background:var(--soft-pink);color:#494444;border:none;border-radius:10px;
+            cursor:pointer;transition:opacity 0.3s;
+        }
+        .private-lock-box button:hover {opacity:0.86;}
+        .private-content {display:none;max-width:720px;margin:0 auto;}
+        .private-content.unlocked {display:block;}
+        .private-lock-actions {display:flex;justify-content:flex-end;margin:0 0 8px;}
+        /* Gallery相册 手账拼贴网格 */
+        #gallery {padding:110px 0;}
+        .gallery-grid {display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+        .gallery-actions {display:none;justify-content:center;margin:-26px 0 28px;}
+        .edit-mode .gallery-actions {display:flex;}
+        .gallery-item {
+            aspect-ratio:1;position:relative;background:var(--paper);border:1px solid var(--border-line);border-radius:12px;
+            box-shadow:var(--shadow-soft);display:flex;align-items:center;justify-content:center;
+            color:var(--text-light);font-size:0.84rem;cursor:pointer;overflow:hidden;
+            transition:transform 0.3s;
+        }
+        .gallery-item:hover {transform:scale(1.025);}
+        .gallery-photo {position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scale(var(--photo-zoom,1));transition:transform .2s;}
+        .gallery-title {position:relative;z-index:1;padding:4px 10px;text-align:center;overflow-wrap:anywhere;}
+        .gallery-item.has-photo .gallery-title {align-self:flex-end;width:100%;background:rgba(35,29,30,.48);color:#fff;}
+        .gallery-controls {position:absolute;z-index:2;left:6px;right:6px;top:6px;display:none;grid-template-columns:auto auto 1fr;align-items:center;gap:4px 6px;padding:5px 7px;border-radius:9px;background:rgba(255,251,248,.94);color:#494444;font-size:.72rem;cursor:default;}
+        .edit-mode .gallery-controls {display:grid;}
+        .gallery-zoom-bounds {color:#756d6e;font-size:.66rem;white-space:nowrap;}
+        .gallery-controls input[type="range"] {grid-column:1/-1;width:100%;min-width:0;margin:0;accent-color:#b88791;}
+        .gallery-controls button {grid-column:3;grid-row:1;border:0;border-radius:6px;padding:3px 6px;background:#fff;color:#9a4754;font:inherit;white-space:nowrap;cursor:pointer;justify-self:end;}
+        .file-input {display:none;}
+        /* Footer */
+        footer {padding:54px 0 32px;text-align:center;border-top:1px dashed var(--border-line);}
+        .footer-signature {font-family:'Dancing Script',cursive;font-size:1.4rem;margin-bottom:8px;}
+        .copyright {font-size:0.8rem;color:var(--text-light);}
+        /* 移动端适配 */
+        @media(max-width:768px){
+            .container {padding:0 20px;}
+            .nav-links {display:none;}
+            .nav-wrap {min-width:0;gap:12px;}
+            .nav-logo {flex-shrink:0;}
+            .nav-actions {gap:8px;flex-shrink:0;}
+            #home {padding-left:20px;padding-right:20px;}
+            .hero-title {font-size:3.2rem;}
+            .hero-card {width:100%;min-width:0;padding:40px 24px;}
+            .hero-desc {overflow-wrap:anywhere;}
+            .about-container {grid-template-columns:1fr;gap:34px;}
+            .works-grid {grid-template-columns:1fr;}
+            .gallery-grid {grid-template-columns:repeat(2,1fr);}
+            .hand-doodle-cat,.hand-doodle-star {display:none;}
+        }
+        @media(max-width:420px){
+            .nav-actions {gap:5px;}
+            .nav-actions .icon-btn {font-size:1rem;padding:4px 2px;}
+        }
+    </style>
+</head>
+<body>
+    <div class="edit-tip">✏️ 编辑模式已开启｜文字、条目与图片会自动保存在本机；退出请点 ✏️</div>
+    <nav id="navbar">
+        <div class="container nav-wrap">
+            <a href="#home" class="nav-logo editable">Cecilia</a>
+            <ul class="nav-links">
+                <li><a href="#home" class="editable">首页</a></li>
+                <li><a href="#about" class="editable">关于我</a></li>
+                <li><a href="#works" class="editable">作品</a></li>
+                <li><a href="#journal" class="editable">随笔</a></li>
+                <li><a href="#private-journal" class="editable">私密日记</a></li>
+                <li><a href="#gallery" class="editable">影像相册</a></li>
+            </ul>
+            <div class="nav-actions">
+                <button class="icon-btn" id="editToggle" type="button" title="进入编辑模式">✏️</button>
+                <button class="icon-btn" id="saveBtn" type="button" title="立即保存到本机" style="display:none;">💾</button>
+                <button class="icon-btn" id="resetBtn" type="button" title="重置本机保存内容" style="display:none;">↺</button>
+                <button class="icon-btn" id="audioUploadBtn" type="button" title="编辑模式上传背景音乐" aria-label="上传背景音乐" style="display:none;">⇧</button>
+                <button class="icon-btn" id="musicBtn" type="button" title="播放背景音乐" aria-label="播放背景音乐">♫</button>
+                <button class="icon-btn" id="themeToggle" type="button" title="切换明暗主题" aria-label="切换明暗主题">☾</button>
+            </div>
+        </div>
+    </nav>
+
+    <section id="home">
+        <div class="hero-card container">
+            <!-- 手绘线稿装饰 -->
+            <svg class="hand-doodle-star" viewBox="0 0 30 30" fill="none" stroke="currentColor" stroke-width="1.2" style="color:var(--soft-pink)">
+                <path d="M15 2L18 11H28L20 17L23 27L15 21L7 27L10 17L2 11H12L15 2"/>
+            </svg>
+            <svg class="hand-doodle-cat" viewBox="0 0 100 85" fill="none" stroke="currentColor" stroke-width="1.4" style="color:var(--soft-blue)">
+                <path d="M18 62 Q32 28 50 34 Q72 28 82 56 Q86 72 70 74 L30 74 Q14 72 18 62Z"/>
+                <path d="M30 34 Q24 18 36 24 Q39 30 36 39"/>
+                <path d="M70 34 Q76 18 64 24 Q61 30 64 39"/>
+                <circle cx="40" cy="51" r="2" fill="currentColor"/>
+                <circle cx="60" cy="51" r="2" fill="currentColor"/>
+                <path d="M47 59 Q50 62 53 59"/>
+            </svg>
+            <h1 class="hero-title handwritten editable">Cecilia</h1>
+            <div class="hero-divider"></div>
+            <p class="hero-subtitle editable">温柔手账小天地</p>
+            <p class="hero-desc editable">
+                向内观心，向外观世。<br>
+                这里是我的数字手账自留地，存放文字、照片、随笔与细碎思考。
+            </p>
+        </div>
+        <div class="scroll-down editable">向下滑动继续浏览 ↓</div>
+    </section>
+
+    <section id="about">
+        <div class="container">
+            <h2 class="section-title editable">About Me</h2>
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-tab="academic">学术版本</button>
+                <button class="tab-btn" data-tab="personal">私人版本</button>
+            </div>
+            <div class="tab-pane active" id="academic">
+                <div class="about-container">
+                    <div class="avatar-box" id="avatar-academic" title="编辑模式点击上传头像">
+                        <span class="handwritten editable">Cecilia</span>
+                    </div>
+                    <div class="text-block">
+                        <h3 class="editable">教育背景</h3>
+                        <p class="editable">社会学硕士 · 心理学学士</p>
+                        <p class="editable">研究方向聚焦社会心理学、身份叙事、质性研究，探索个体心智与社会结构之间的联结。</p>
+                        <h3 style="margin-top:28px" class="editable">研究兴趣</h3>
+                        <p class="editable">跨文化心理学｜身份建构｜质性研究｜青年心理健康</p>
+                        <div class="tag-group">
+                            <span class="tag editable">社会学</span>
+                            <span class="tag editable">心理学</span>
+                            <span class="tag editable">质性研究</span>
+                            <span class="tag editable">文化研究</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane" id="personal">
+                <div class="about-container">
+                    <div class="avatar-box" id="avatar-personal" title="编辑模式点击上传头像">
+                        <span class="handwritten editable">Hi :)</span>
+                    </div>
+                    <div class="text-block">
+                        <h3 class="editable">我是 Cecilia</h3>
+                        <p class="editable">喜欢用文字记录情绪，在镜头捕捉温柔瞬间。相信观察是一种柔软的力量。</p>
+                        <p class="editable">热爱散步、阅读、收集碎片式的灵感，在平凡日常里寻找微小的浪漫。</p>
+                        <h3 style="margin-top:28px" class="editable">偏爱事物</h3>
+                        <p class="editable">旧书、手写字体、清晨柔光、猫咪、慢旅行</p>
+                        <div class="tag-group">
+                            <span class="tag editable">阅读</span>
+                            <span class="tag editable">摄影</span>
+                            <span class="tag editable">文字创作</span>
+                            <span class="tag editable">手账</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="works">
+        <div class="container">
+            <h2 class="section-title editable">Works</h2>
+            <div class="works-grid">
+                <div class="work-card">
+                    <h4 class="editable">城市青年身份叙事研究</h4>
+                    <p class="editable">基于深度访谈的质性研究，探讨流动青年在城市中的身份建构与文化适应。</p>
+                    <span class="work-tag editable">社会学</span>
+                    <span class="work-tag editable">质性研究</span>
+                </div>
+                <div class="work-card">
+                    <h4 class="editable">社交媒体与青年心理健康报告</h4>
+                    <p class="editable">分析社交平台使用对自我认知、情绪状态的影响，结合心理学理论解析内在机制。</p>
+                    <span class="work-tag editable">心理学</span>
+                    <span class="work-tag editable">研究报告</span>
+                </div>
+                <div class="work-card">
+                    <h4 class="editable">文化心理学读书笔记</h4>
+                    <p class="editable">整理文化与心智、集体与个体认知相关经典文献，记录阅读思考。</p>
+                    <span class="work-tag editable">读书札记</span>
+                    <span class="work-tag editable">理论</span>
+                </div>
+                <div class="work-card">
+                    <h4 class="editable">原创随笔与短诗合集</h4>
+                    <p class="editable">关于梦境、情绪、时间与日常的微观文字创作。</p>
+                    <span class="work-tag editable">文学创作</span>
+                    <span class="work-tag editable">随笔</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="journal">
+        <div class="container">
+            <h2 class="section-title editable">Journal</h2>
+            <div class="journal-list">
+                <div class="journal-item">
+                    <div class="journal-date editable">September 2026</div>
+                    <h4 class="journal-title editable">八月尾声，与平静共处</h4>
+                    <p class="journal-excerpt editable">夏意慢慢褪去的时候，内心更容易建立秩序。热烈退散之后，才听得见自己的呼吸。</p>
+                </div>
+                <div class="journal-item">
+                    <div class="journal-date editable">August 2026</div>
+                    <h4 class="journal-title editable">作为观察者的日常</h4>
+                    <p class="journal-excerpt editable">社会学训练留给我最好的礼物，是学会带着距离去观察生活，不是抽离，而是投入同时保留旁观的眼睛。</p>
+                </div>
+                <div class="journal-item">
+                    <div class="journal-date editable">July 2026</div>
+                    <h4 class="journal-title editable">梦境记录：海边旧屋</h4>
+                    <p class="journal-excerpt editable">又梦见那座海边木屋，木楼梯踩上去轻轻作响。窗外是雾蓝色的海，安静，只有风穿过长廊。</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="private-journal">
+        <div class="container">
+            <h2 class="section-title editable">Private Journal</h2>
+            <div class="private-lock-box" id="privateLock">
+                <h3 class="editable">🔒 私密手账</h3>
+                <input type="password" id="privatePassword" placeholder="输入密码解锁">
+                <button onclick="unlockPrivate()">解锁查看</button>
+            </div>
+            <div class="private-content" id="privateContent">
+                <div class="private-lock-actions"><button class="soft-button" id="lockPrivateBtn" type="button">重新锁定</button></div>
+                <div class="journal-list">
+                    <div class="journal-item">
+                        <div class="journal-date editable">私密 · 2026.09.10</div>
+                        <h4 class="journal-title editable">只写给自己的话</h4>
+                        <p class="journal-excerpt editable">这是只属于你的空间，存放所有不想对外展示的情绪、思绪与碎念。</p>
+                    </div>
+                    <div class="journal-item">
+                        <div class="journal-date editable">私密 · 2026.08.25</div>
+                        <h4 class="journal-title editable">梦境碎片存档</h4>
+                        <p class="journal-excerpt editable">把醒来依旧清晰的梦境记录下来，时间久了就成为平行世界的记忆。</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="gallery">
+        <div class="container">
+            <h2 class="section-title editable">Gallery</h2>
+            <div class="gallery-actions"><button class="soft-button" id="addGalleryPhotos" type="button">＋ 新增照片</button></div>
+            <div class="gallery-grid">
+                <div class="gallery-item" data-index="0" title="编辑模式点击上传图片"><span class="editable">清晨窗光</span></div>
+                <div class="gallery-item" data-index="1" title="编辑模式点击上传图片"><span class="editable">街角小猫</span></div>
+                <div class="gallery-item" data-index="2" title="编辑模式点击上传图片"><span class="editable">旧书店</span></div>
+                <div class="gallery-item" data-index="3" title="编辑模式点击上传图片"><span class="editable">雨后街道</span></div>
+                <div class="gallery-item" data-index="4" title="编辑模式点击上传图片"><span class="editable">云的模样</span></div>
+                <div class="gallery-item" data-index="5" title="编辑模式点击上传图片"><span class="editable">日落时分</span></div>
+            </div>
+        </div>
+    </section>
+    <input type="file" class="file-input" id="fileInput" accept="image/*">
+    <input type="file" class="file-input" id="galleryAddInput" accept="image/*" multiple>
+    <input type="file" class="file-input" id="audioInput" accept="audio/*">
+
+    <footer>
+        <div class="container">
+            <div class="footer-signature handwritten editable">— Cecilia</div>
+            <p class="copyright editable">© 2026 Cecilia · 温柔手账小天地</p>
+        </div>
+    </footer>
+
+    <script>
+        (() => {
+            'use strict';
+            const STORAGE_KEY = 'handnote_cecilia_site';
+            const MEDIA_DB = 'handnote_cecilia_media';
+            const DEFAULT_PWD = 'cecilia2026';
+            const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
+            const MAX_INPUT_IMAGE_SIZE = 20 * 1024 * 1024;
+            const root = document.documentElement;
+            const themeBtn = document.getElementById('themeToggle');
+            const editToggle = document.getElementById('editToggle');
+            const saveBtn = document.getElementById('saveBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const musicBtn = document.getElementById('musicBtn');
+            const audioUploadBtn = document.getElementById('audioUploadBtn');
+            const fileInput = document.getElementById('fileInput');
+            const galleryAddInput = document.getElementById('galleryAddInput');
+            const audioInput = document.getElementById('audioInput');
+            const originalEditables = Array.from(document.querySelectorAll('.editable'));
+            const baseGalleryItems = Array.from(document.querySelectorAll('.gallery-item'));
+            const staticEditables = originalEditables.filter(el => !el.closest('#works .work-card, #journal .journal-item'));
+            let saved = {};
+            let editOn = false;
+            let uploadTarget = null;
+            let saveTimer = null;
+            let toastTimer = null;
+            let audioObjectUrl = '';
+            let mediaDbPromise = null;
+            let imageMigrationReady = Promise.resolve(true);
+            const imageObjectUrls = new Map();
+            const state = {text: {}, img: {}, gallery: [], entries: {works: [], journal: [], privateJournal: []}, theme: 'light', tab: 'academic'};
+
+            function showToast(message, isError = false, duration = 3200) {
+                let toast = document.getElementById('siteToast');
+                if (!toast) {
+                    toast = document.createElement('div');
+                    toast.id = 'siteToast';
+                    toast.className = 'toast';
+                    toast.setAttribute('role', 'status');
+                    toast.setAttribute('aria-live', 'polite');
+                    document.body.appendChild(toast);
+                }
+                toast.textContent = message;
+                toast.classList.toggle('error', isError);
+                toast.hidden = false;
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => { toast.hidden = true; }, duration);
+            }
+
+            function readStoredData() {
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    saved = raw ? JSON.parse(raw) : {};
+                    if (!saved || typeof saved !== 'object') saved = {};
+                } catch (error) {
+                    saved = {};
+                    showToast('读取本机存档失败；页面仍可浏览，修改可能无法保存。', true, 7000);
+                }
+                if (saved.text) {
+                    originalEditables.forEach((el, index) => {
+                        const key = `t${index}`;
+                        if (Object.prototype.hasOwnProperty.call(saved.text, key)) el.innerHTML = saved.text[key];
+                    });
+                }
+                staticEditables.forEach((el, index) => {
+                    const key = `p${index}`;
+                    el.dataset.contentKey = key;
+                    if (saved.pageText && Object.prototype.hasOwnProperty.call(saved.pageText, key)) el.innerHTML = saved.pageText[key];
+                });
+                state.img = saved.img && typeof saved.img === 'object' ? saved.img : {};
+                let legacyTheme = 'light';
+                try { legacyTheme = localStorage.getItem('theme') || 'light'; } catch (error) { /* use the cream default when storage is blocked */ }
+                state.theme = saved.theme === 'dark' || saved.theme === 'light' ? saved.theme : legacyTheme;
+                state.tab = saved.tab === 'personal' ? 'personal' : 'academic';
+            }
+
+            function newId() {
+                return 'entry-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+            }
+
+            function makeDefaultEntries() {
+                const works = Array.from(document.querySelectorAll('#works .work-card')).map(card => ({
+                    id: newId(),
+                    title: card.querySelector('h4')?.textContent.trim() || '未命名作品',
+                    date: card.dataset.date || '',
+                    summary: card.querySelector('p')?.textContent.trim() || '',
+                    body: card.querySelector('p')?.textContent.trim() || '',
+                    tags: Array.from(card.querySelectorAll('.work-tag')).map(tag => tag.textContent.trim())
+                }));
+                const journal = Array.from(document.querySelectorAll('#journal .journal-item')).map(item => ({
+                    id: newId(),
+                    date: item.querySelector('.journal-date')?.textContent.trim() || '',
+                    title: item.querySelector('.journal-title')?.textContent.trim() || '未命名随笔',
+                    summary: item.querySelector('.journal-excerpt')?.textContent.trim() || '',
+                    body: item.querySelector('.journal-excerpt')?.textContent.trim() || '',
+                    tags: []
+                }));
+                return {works, journal};
+            }
+
+            function makeDefaultPrivateEntries() {
+                return Array.from(document.querySelectorAll('#privateContent .journal-item')).map(item => ({
+                    id: newId(),
+                    date: item.querySelector('.journal-date')?.textContent.trim() || '',
+                    title: item.querySelector('.journal-title')?.textContent.trim() || '未命名私密日记',
+                    summary: item.querySelector('.journal-excerpt')?.textContent.trim() || '',
+                    body: item.querySelector('.journal-excerpt')?.textContent.trim() || '',
+                    tags: []
+                }));
+            }
+
+            function normalizeEntries(list, defaults) {
+                if (!Array.isArray(list)) return defaults;
+                return list.filter(item => item && typeof item === 'object').map(item => ({
+                    id: String(item.id || newId()),
+                    title: String(item.title || ''),
+                    date: String(item.date || ''),
+                    summary: String(item.summary || ''),
+                    body: String(item.body || ''),
+                    tags: Array.isArray(item.tags) ? item.tags.map(String) : []
+                }));
+            }
+
+            function makeDefaultGallery() {
+                return baseGalleryItems.map((item, index) => ({
+                    id: `g${index}`,
+                    title: item.querySelector('span')?.textContent.trim() || `相册照片 ${index + 1}`,
+                    zoom: 100
+                }));
+            }
+
+            function normalizeGallery(list, defaults) {
+                if (!Array.isArray(list)) return defaults;
+                return list.filter(item => item && typeof item === 'object' && item.id).map(item => ({
+                    id: String(item.id),
+                    title: String(item.title || ''),
+                    zoom: Math.min(160, Math.max(70, Number(item.zoom) || 100))
+                }));
+            }
+
+            function renderGallery() {
+                const galleryRoot = document.querySelector('#gallery .gallery-grid');
+                galleryRoot.replaceChildren();
+                state.gallery.forEach(record => {
+                    const defaultIndex = /^g[0-5]$/.test(record.id) ? Number(record.id.slice(1)) : -1;
+                    const card = defaultIndex >= 0 ? baseGalleryItems[defaultIndex] : document.createElement('div');
+                    const retainedTitle = card.querySelector('span.editable');
+                    card.className = 'gallery-item';
+                    card.dataset.galleryId = record.id;
+                    card.dataset.index = record.id;
+                    card.title = '编辑模式点击图片可替换';
+                    card.replaceChildren();
+                    const image = document.createElement('img');
+                    image.className = 'gallery-photo';
+                    image.alt = record.title || '手账相册照片';
+                    image.hidden = true;
+                    image.style.setProperty('--photo-zoom', String(record.zoom / 100));
+                    const title = retainedTitle || document.createElement('span');
+                    title.className = 'editable gallery-title';
+                    title.dataset.galleryTitle = record.id;
+                    title.contentEditable = editOn ? 'true' : 'false';
+                    title.textContent = record.title;
+                    const controls = document.createElement('div');
+                    controls.className = 'gallery-controls';
+                    const zoomLabel = document.createElement('span');
+                    zoomLabel.className = 'gallery-zoom-label';
+                    zoomLabel.textContent = `缩放 ${record.zoom}%`;
+                    const zoomBounds = document.createElement('span');
+                    zoomBounds.className = 'gallery-zoom-bounds';
+                    zoomBounds.textContent = '70–160%';
+                    const slider = document.createElement('input');
+                    slider.type = 'range'; slider.min = '70'; slider.max = '160'; slider.step = '1'; slider.value = String(record.zoom);
+                    slider.dataset.galleryZoom = record.id;
+                    slider.setAttribute('aria-label', `${record.title || '照片'}显示缩放，70% 至 160%`);
+                    const remove = document.createElement('button');
+                    remove.type = 'button'; remove.dataset.galleryDelete = record.id; remove.textContent = '删除';
+                    remove.setAttribute('aria-label', `删除照片：${record.title || '未命名照片'}`);
+                    controls.append(zoomLabel, zoomBounds, remove, slider);
+                    card.append(image, title, controls);
+                    const stored = state.img[record.id];
+                    if (typeof stored === 'string') { image.src = stored; image.hidden = false; }
+                    else if (stored?.key && imageObjectUrls.has(stored.key)) { image.src = imageObjectUrls.get(stored.key); image.hidden = false; }
+                    card.classList.toggle('has-photo', Boolean(stored));
+                    galleryRoot.appendChild(card);
+                });
+            }
+
+            function setTheme(theme, persist = true) {
+                state.theme = theme === 'dark' ? 'dark' : 'light';
+                root.setAttribute('data-theme', state.theme);
+                themeBtn.textContent = state.theme === 'dark' ? '☀' : '☾';
+                themeBtn.setAttribute('aria-label', state.theme === 'dark' ? '切换为浅色主题' : '切换为深色主题');
+                if (persist) scheduleSave();
+            }
+
+            function getPersistedData() {
+                const pageText = {};
+                staticEditables.forEach((el, index) => { pageText[`p${index}`] = el.innerHTML; });
+                return {
+                    version: 3,
+                    pageText,
+                    img: state.img,
+                    gallery: state.gallery,
+                    entries: state.entries,
+                    theme: state.theme,
+                    tab: state.tab
+                };
+            }
+
+            function persistNow() {
+                try {
+                    const data = getPersistedData();
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                    return true;
+                } catch (error) {
+                    showToast('本机存储空间不足或不可用；本次修改尚未写入。请检查浏览器存储额度后重试。', true, 7000);
+                    return false;
+                }
+            }
+
+            function scheduleSave() {
+                clearTimeout(saveTimer);
+                saveTimer = setTimeout(() => {
+                    if (persistNow()) showToast('已自动保存到当前浏览器。');
+                }, 450);
+            }
+
+            async function restoreImages() {
+                let failed = false;
+                for (const [target, metadata] of Object.entries(state.img)) {
+                    let source = '';
+                    if (typeof metadata === 'string') source = metadata;
+                    else if (metadata && metadata.key) {
+                        try {
+                            const record = await getImageRecord(metadata.key);
+                            if (record?.blob) {
+                                if (!imageObjectUrls.has(metadata.key)) imageObjectUrls.set(metadata.key, URL.createObjectURL(record.blob));
+                                source = imageObjectUrls.get(metadata.key);
+                            }
+                        } catch (error) { failed = true; }
+                    }
+                    if (!source) { if (metadata && typeof metadata === 'object') failed = true; continue; }
+                    if (target === 'avaA') applyStoredImage(document.getElementById('avatar-academic'), source);
+                    else if (target === 'avaP') applyStoredImage(document.getElementById('avatar-personal'), source);
+                    else {
+                        const card = document.querySelector(`.gallery-item[data-gallery-id="${CSS.escape(target)}"]`);
+                        const image = card?.querySelector('.gallery-photo');
+                        if (image) { image.src = source; image.hidden = false; card.classList.add('has-photo'); }
+                    }
+                }
+                if (failed) showToast('部分本机照片暂时无法从浏览器媒体库读取；原索引仍保留，请勿清理浏览器数据。', true, 7000);
+            }
+
+            function applyStoredImage(element, value) {
+                if (!element || typeof value !== 'string' || !value) return;
+                const cssValue = value.startsWith('url(') ? value : `url("${value}")`;
+                element.style.backgroundImage = cssValue;
+                const placeholder = element.querySelector('span');
+                if (placeholder) placeholder.style.display = 'none';
+            }
+
+            function setEditablesEnabled(enabled) {
+                document.querySelectorAll('.editable').forEach(el => { el.contentEditable = enabled ? 'true' : 'false'; });
+            }
+
+            function setEditMode(enabled) {
+                editOn = enabled;
+                document.body.classList.toggle('edit-mode', editOn);
+                editToggle.classList.toggle('active', editOn);
+                editToggle.title = editOn ? '退出编辑模式' : '进入编辑模式';
+                editToggle.setAttribute('aria-label', editToggle.title);
+                editToggle.textContent = editOn ? '✓' : '✏️';
+                saveBtn.style.display = editOn ? 'block' : 'none';
+                resetBtn.style.display = editOn ? 'block' : 'none';
+                audioUploadBtn.style.display = editOn ? 'block' : 'none';
+                setEditablesEnabled(editOn);
+                if (!editOn) {
+                    closeEntryDialog();
+                    if (persistNow()) showToast('已退出编辑模式；修改已保存在本机。');
+                } else {
+                    showToast('编辑模式已开启，可以修改页面内容；内容保存在当前浏览器。', false, 5000);
+                }
+            }
+
+            function canEditEntry(kind) {
+                return editOn && (kind !== 'privateJournal' || document.getElementById('privateContent').classList.contains('unlocked'));
+            }
+
+            function makeCollectionActions(rootSelector, kind, label) {
+                const container = document.createElement('div');
+                container.className = 'collection-actions';
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'soft-button';
+                button.textContent = `＋ 新增${label}`;
+                button.addEventListener('click', () => {
+                    if (!canEditEntry(kind)) return;
+                    const blank = {id: newId(), title: '', date: '', summary: '', body: '', tags: []};
+                    state.entries[kind].unshift(blank);
+                    openEntryForm(kind, blank.id, true);
+                });
+                container.appendChild(button);
+                document.querySelector(rootSelector).before(container);
+            }
+
+            function makeEditableText(tagName, className, text, record, field, kind) {
+                const element = document.createElement(tagName);
+                if (className) element.className = className;
+                element.classList.add('editable');
+                element.dataset.entryId = record.id;
+                element.dataset.entryKind = kind || (field === 'journal-title' || field === 'journal-date' || field === 'journal-summary' ? 'journal' : 'works');
+                element.dataset.entryField = field;
+                element.textContent = text;
+                element.contentEditable = editOn ? 'true' : 'false';
+                return element;
+            }
+
+            function makeEntryCardActions(kind, record) {
+                const actions = document.createElement('div');
+                actions.className = 'entry-card-actions';
+                const edit = document.createElement('button');
+                edit.type = 'button'; edit.dataset.cardAction = 'edit'; edit.textContent = '编辑';
+                edit.addEventListener('click', event => { event.stopPropagation(); if (canEditEntry(kind)) openEntryForm(kind, record.id, false); });
+                const remove = document.createElement('button');
+                remove.type = 'button'; remove.className = 'entry-delete'; remove.dataset.cardAction = 'delete'; remove.textContent = '删除';
+                remove.addEventListener('click', event => { event.stopPropagation(); if (canEditEntry(kind)) deleteEntry(kind, record.id); });
+                actions.append(edit, remove);
+                return actions;
+            }
+
+            function entryKindLabel(kind) {
+                if (kind === 'works') return '作品';
+                if (kind === 'privateJournal') return '私密日记';
+                return '随笔';
+            }
+
+            function deleteEntry(kind, id) {
+                if (!canEditEntry(kind) || !confirm(`确定删除这条${entryKindLabel(kind)}？此操作无法撤销。`)) return false;
+                const previous = state.entries[kind];
+                state.entries[kind] = previous.filter(item => item.id !== id);
+                renderEntries();
+                if (!persistNow()) {
+                    state.entries[kind] = previous;
+                    renderEntries();
+                    showToast('保存失败，条目已恢复；请检查浏览器本机存储。', true, 6000);
+                    return false;
+                }
+                showToast('条目已删除并保存到本机。');
+                return true;
+            }
+
+            function renderEntries() {
+                const worksRoot = document.querySelector('#works .works-grid');
+                worksRoot.replaceChildren();
+                state.entries.works.forEach(record => {
+                    const card = document.createElement('article');
+                    card.className = 'work-card entry-card';
+                    card.dataset.entryId = record.id;
+                    card.dataset.entryKind = 'works';
+                    card.tabIndex = 0;
+                    card.setAttribute('role', 'button');
+                    card.setAttribute('aria-label', `打开作品：${record.title || '未命名作品'}`);
+                    if (record.date) card.appendChild(makeEditableText('div', 'entry-date', record.date, record, 'work-date'));
+                    card.appendChild(makeEditableText('h4', '', record.title, record, 'work-title'));
+                    card.appendChild(makeEditableText('p', '', record.summary, record, 'work-summary'));
+                    if (record.tags.length) {
+                        const tags = document.createElement('div');
+                        tags.className = 'entry-tags';
+                        record.tags.forEach((tagText, index) => {
+                            const tag = document.createElement('span');
+                            tag.className = 'work-tag editable';
+                            tag.dataset.entryId = record.id;
+                            tag.dataset.entryKind = 'works';
+                            tag.dataset.entryField = 'tag';
+                            tag.dataset.tagIndex = String(index);
+                            tag.textContent = tagText;
+                            tag.contentEditable = editOn ? 'true' : 'false';
+                            tags.appendChild(tag);
+                        });
+                        card.appendChild(tags);
+                    }
+                    card.appendChild(makeEntryCardActions('works', record));
+                    worksRoot.appendChild(card);
+                });
+
+                const journalRoot = document.querySelector('#journal .journal-list');
+                journalRoot.replaceChildren();
+                state.entries.journal.forEach(record => {
+                    const item = document.createElement('article');
+                    item.className = 'journal-item entry-card';
+                    item.dataset.entryId = record.id;
+                    item.dataset.entryKind = 'journal';
+                    item.tabIndex = 0;
+                    item.setAttribute('role', 'button');
+                    item.setAttribute('aria-label', `打开随笔：${record.title || '未命名随笔'}`);
+                    item.appendChild(makeEditableText('div', 'journal-date', record.date, record, 'journal-date'));
+                    item.appendChild(makeEditableText('h4', 'journal-title', record.title, record, 'journal-title'));
+                    item.appendChild(makeEditableText('p', 'journal-excerpt', record.summary, record, 'journal-summary'));
+                    item.appendChild(makeEntryCardActions('journal', record));
+                    journalRoot.appendChild(item);
+                });
+
+                const privateRoot = document.querySelector('#privateContent .journal-list');
+                privateRoot.replaceChildren();
+                state.entries.privateJournal.forEach(record => {
+                    const item = document.createElement('article');
+                    item.className = 'journal-item entry-card';
+                    item.dataset.entryId = record.id;
+                    item.dataset.entryKind = 'privateJournal';
+                    item.tabIndex = 0;
+                    item.setAttribute('role', 'button');
+                    item.setAttribute('aria-label', `打开私密日记：${record.title || '未命名私密日记'}`);
+                    item.appendChild(makeEditableText('div', 'journal-date', record.date, record, 'private-date', 'privateJournal'));
+                    item.appendChild(makeEditableText('h4', 'journal-title', record.title, record, 'private-title', 'privateJournal'));
+                    item.appendChild(makeEditableText('p', 'journal-excerpt', record.summary, record, 'private-summary', 'privateJournal'));
+                    item.appendChild(makeEntryCardActions('privateJournal', record));
+                    privateRoot.appendChild(item);
+                });
+            }
+
+            document.querySelector('#works .works-grid').classList.add('entry-grid');
+            makeCollectionActions('#works .works-grid', 'works', '作品');
+            makeCollectionActions('#journal .journal-list', 'journal', '随笔');
+            makeCollectionActions('#privateContent .journal-list', 'privateJournal', '私密日记');
+
+            const entryModal = document.createElement('div');
+            entryModal.id = 'entryModal';
+            entryModal.className = 'dialog-backdrop';
+            entryModal.hidden = true;
+            entryModal.innerHTML = `
+                <section class="dialog-panel" role="dialog" aria-modal="true" aria-labelledby="entryDialogTitle">
+                    <button class="dialog-close" type="button" data-dialog-close aria-label="关闭详情">×</button>
+                    <div id="entryDetail">
+                        <div class="entry-date" id="detailDate"></div>
+                        <h2 id="entryDialogTitle"></h2>
+                        <p class="dialog-copy" id="detailSummary"></p>
+                        <div class="dialog-copy" id="detailBody"></div>
+                        <div class="dialog-actions" id="detailActions"></div>
+                    </div>
+                    <form class="dialog-form" id="entryForm" hidden>
+                        <h2 id="formHeading">编辑条目</h2>
+                        <label for="entryTitle">标题</label><input id="entryTitle" name="title" required maxlength="180">
+                        <label for="entryDate">日期</label><input id="entryDate" name="date" maxlength="80">
+                        <label for="entrySummary">摘要</label><textarea id="entrySummary" name="summary" maxlength="2000"></textarea>
+                        <label for="entryBody">正文</label><textarea id="entryBody" name="body"></textarea>
+                        <label for="entryTags">标签（作品可选，用顿号或逗号分隔）</label><input id="entryTags" name="tags" maxlength="300">
+                        <div class="dialog-actions">
+                            <button class="modal-button primary" type="submit">保存条目</button>
+                            <button class="modal-button" type="button" data-form-cancel>取消</button>
+                        </div>
+                    </form>
+                </section>`;
+            document.body.appendChild(entryModal);
+
+            function getRecord(kind, id) {
+                return state.entries[kind]?.find(item => item.id === id);
+            }
+
+            function openEntryDetail(kind, id) {
+                const record = getRecord(kind, id);
+                if (!record || (kind === 'privateJournal' && !document.getElementById('privateContent').classList.contains('unlocked'))) return;
+                document.getElementById('entryDetail').hidden = false;
+                document.getElementById('entryForm').hidden = true;
+                document.getElementById('detailDate').textContent = record.date || entryKindLabel(kind);
+                document.getElementById('entryDialogTitle').textContent = record.title || '未命名条目';
+                document.getElementById('detailSummary').textContent = record.summary || '';
+                document.getElementById('detailBody').textContent = record.body || record.summary || '';
+                const actions = document.getElementById('detailActions');
+                actions.replaceChildren();
+                if (editOn) {
+                    const edit = document.createElement('button');
+                    edit.type = 'button'; edit.className = 'modal-button primary'; edit.textContent = '编辑条目';
+                    edit.addEventListener('click', () => openEntryForm(kind, id, false));
+                    const remove = document.createElement('button');
+                    remove.type = 'button'; remove.className = 'modal-button danger'; remove.textContent = '删除条目';
+                    remove.addEventListener('click', () => {
+                        if (deleteEntry(kind, id)) closeEntryDialog();
+                    });
+                    actions.append(edit, remove);
+                }
+                const close = document.createElement('button');
+                close.type = 'button'; close.className = 'modal-button'; close.textContent = '关闭详情';
+                close.addEventListener('click', closeEntryDialog);
+                actions.appendChild(close);
+                entryModal.hidden = false;
+                document.body.classList.add('dialog-open');
+                entryModal.querySelector('[data-dialog-close]').focus();
+            }
+
+            function openEntryForm(kind, id, isNew) {
+                const record = getRecord(kind, id);
+                if (!record || !canEditEntry(kind)) return;
+                document.getElementById('entryDetail').hidden = true;
+                const form = document.getElementById('entryForm');
+                form.hidden = false;
+                form.dataset.entryKind = kind;
+                form.dataset.entryId = id;
+                form.dataset.isNew = String(isNew);
+                document.getElementById('formHeading').textContent = `${isNew ? '新增' : '编辑'}${entryKindLabel(kind)}`;
+                form.elements.title.value = record.title;
+                form.elements.date.value = record.date;
+                form.elements.summary.value = record.summary;
+                form.elements.body.value = record.body;
+                form.elements.tags.value = (record.tags || []).join('、');
+                entryModal.hidden = false;
+                document.body.classList.add('dialog-open');
+                form.elements.title.focus();
+            }
+
+            function closeEntryDialog() {
+                if (!entryModal) return;
+                const form = document.getElementById('entryForm');
+                if (!form.hidden && form.dataset.isNew === 'true') {
+                    const kind = form.dataset.entryKind;
+                    state.entries[kind] = state.entries[kind].filter(item => item.id !== form.dataset.entryId);
+                    renderEntries();
+                    form.dataset.isNew = 'false';
+                }
+                entryModal.hidden = true;
+                document.body.classList.remove('dialog-open');
+            }
+
+            entryModal.addEventListener('click', event => {
+                if (event.target === entryModal || event.target.closest('[data-dialog-close]') || event.target.closest('[data-form-cancel]')) closeEntryDialog();
+            });
+            document.addEventListener('keydown', event => {
+                if (event.key === 'Escape' && !entryModal.hidden) closeEntryDialog();
+            });
+            document.getElementById('entryForm').addEventListener('submit', event => {
+                event.preventDefault();
+                const form = event.currentTarget;
+                const kind = form.dataset.entryKind;
+                const record = getRecord(kind, form.dataset.entryId);
+                if (!record) return;
+                const values = new FormData(form);
+                record.title = String(values.get('title') || '').trim();
+                record.date = String(values.get('date') || '').trim();
+                record.summary = String(values.get('summary') || '').trim();
+                record.body = String(values.get('body') || '');
+                record.tags = String(values.get('tags') || '').split(/[、,，]/).map(tag => tag.trim()).filter(Boolean);
+                renderEntries();
+                const success = persistNow();
+                form.dataset.isNew = 'false';
+                closeEntryDialog();
+                showToast(success ? '条目已保存到本机。' : '条目暂未写入浏览器存储，请检查存储空间。', !success, 5500);
+            });
+
+            function openPasswordDialog() {
+                const layer = document.createElement('div');
+                layer.className = 'dialog-backdrop';
+                layer.id = 'passwordModal';
+                layer.innerHTML = `<section class="dialog-panel" role="dialog" aria-modal="true" aria-labelledby="passwordHeading" style="max-width:420px">
+                    <button class="dialog-close" type="button" aria-label="关闭密码框">×</button>
+                    <h2 id="passwordHeading">进入编辑模式</h2>
+                    <form class="password-form"><label for="editPassword">编辑密码</label><input id="editPassword" type="password" autocomplete="current-password" required>
+                    <p class="password-error" aria-live="polite"></p><div class="dialog-actions"><button class="modal-button primary" type="submit">解锁编辑</button><button class="modal-button" type="button" data-password-cancel>取消</button></div></form>
+                </section>`;
+                document.body.appendChild(layer);
+                document.body.classList.add('dialog-open');
+                const input = layer.querySelector('#editPassword');
+                input.focus();
+                const close = () => { layer.remove(); document.body.classList.remove('dialog-open'); };
+                layer.addEventListener('click', event => { if (event.target === layer || event.target.closest('.dialog-close') || event.target.closest('[data-password-cancel]')) close(); });
+                layer.querySelector('form').addEventListener('submit', event => {
+                    event.preventDefault();
+                    if (input.value === DEFAULT_PWD) {
+                        close();
+                        setEditMode(true);
+                    } else {
+                        layer.querySelector('.password-error').textContent = '密码不正确，请重试。';
+                        input.select();
+                    }
+                });
+            }
+
+            function displayStoredImage(target, source) {
+                if (target === 'avaA') applyStoredImage(document.getElementById('avatar-academic'), source);
+                else if (target === 'avaP') applyStoredImage(document.getElementById('avatar-personal'), source);
+                else {
+                    const card = document.querySelector(`.gallery-item[data-gallery-id="${CSS.escape(target)}"]`);
+                    const image = card?.querySelector('.gallery-photo');
+                    if (image) { image.src = source; image.hidden = false; card.classList.add('has-photo'); }
+                }
+            }
+
+            function openMediaDB() {
+                if (!('indexedDB' in window)) return Promise.reject(new Error('此浏览器不支持 IndexedDB'));
+                if (!mediaDbPromise) {
+                    mediaDbPromise = new Promise((resolve, reject) => {
+                        const request = indexedDB.open(MEDIA_DB, 1);
+                        request.onupgradeneeded = () => {
+                            if (!request.result.objectStoreNames.contains('media')) request.result.createObjectStore('media');
+                        };
+                        request.onsuccess = () => resolve(request.result);
+                        request.onerror = () => reject(request.error || new Error('无法打开本机媒体存储'));
+                        request.onblocked = () => reject(new Error('本机媒体数据库被其他页面占用'));
+                    });
+                }
+                return mediaDbPromise;
+            }
+
+            function putImageRecord(key, record) {
+                return openMediaDB().then(db => new Promise((resolve, reject) => {
+                    const transaction = db.transaction('media', 'readwrite');
+                    transaction.objectStore('media').put(record, key);
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = () => reject(transaction.error || new Error('写入本机图片失败'));
+                    transaction.onabort = () => reject(transaction.error || new Error('本机图片存储已取消'));
+                }));
+            }
+
+            function putImageRecords(records) {
+                return openMediaDB().then(db => new Promise((resolve, reject) => {
+                    const transaction = db.transaction('media', 'readwrite');
+                    const store = transaction.objectStore('media');
+                    records.forEach(({key, record}) => store.put(record, key));
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = () => reject(transaction.error || new Error('旧图片迁移写入失败'));
+                    transaction.onabort = () => reject(transaction.error || new Error('旧图片迁移已取消'));
+                }));
+            }
+
+            function getImageRecord(key) {
+                return openMediaDB().then(db => new Promise((resolve, reject) => {
+                    const transaction = db.transaction('media', 'readonly');
+                    const request = transaction.objectStore('media').get(key);
+                    request.onsuccess = () => resolve(request.result || null);
+                    request.onerror = () => reject(request.error || new Error('读取本机图片失败'));
+                }));
+            }
+
+            function deleteImageRecord(key) {
+                return openMediaDB().then(db => new Promise((resolve, reject) => {
+                    const transaction = db.transaction('media', 'readwrite');
+                    transaction.objectStore('media').delete(key);
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = () => reject(transaction.error || new Error('删除本机图片失败'));
+                    transaction.onabort = () => reject(transaction.error || new Error('删除本机图片已取消'));
+                }));
+            }
+
+            async function dataURLToBlob(value) {
+                const match = /^data:(image\/[a-zA-Z0-9.+-]+)?(;base64)?,([\s\S]*)$/.exec(value);
+                if (!match) throw new Error('旧图片数据格式无法识别');
+                const mime = match[1] || 'application/octet-stream';
+                const payload = match[3];
+                if (match[2]) {
+                    const binary = atob(payload);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let index = 0; index < binary.length; index++) bytes[index] = binary.charCodeAt(index);
+                    return new Blob([bytes], {type: mime});
+                }
+                return new Blob([decodeURIComponent(payload)], {type: mime});
+            }
+
+            async function migrateLegacyImages() {
+                const legacy = Object.entries(state.img).filter(([, value]) => typeof value === 'string' && value.startsWith('data:image/'));
+                if (!legacy.length) return true;
+                const previous = state.img;
+                try {
+                    const records = await Promise.all(legacy.map(async ([target, dataUrl]) => {
+                        const blob = await dataURLToBlob(dataUrl);
+                        return {target, key: `image:${target}`, record: {blob, name: '旧存档图片（已迁移）', type: blob.type, size: blob.size, updatedAt: Date.now()}};
+                    }));
+                    await putImageRecords(records);
+                    const next = {...previous};
+                    records.forEach(({target, key, record}) => { next[target] = {key, name: record.name, type: record.type, size: record.size, updatedAt: record.updatedAt}; });
+                    state.img = next;
+                    if (!persistNow()) {
+                        state.img = previous;
+                        showToast('旧图片已写入浏览器媒体库，但索引替换未能保存；原 localStorage 图片仍保留，稍后刷新可重试。', true, 9000);
+                        return false;
+                    }
+                    showToast(`已安全迁移 ${records.length} 张旧图片到浏览器本机媒体库。`, false, 6000);
+                    return true;
+                } catch (error) {
+                    state.img = previous;
+                    showToast(`旧图片迁移失败，原 localStorage 数据已保留：${error.message || '浏览器媒体库不可用'}。请勿清理本机网站数据。`, true, 10000);
+                    return false;
+                }
+            }
+
+            async function storageEstimateLabel() {
+                try {
+                    if (!navigator.storage?.estimate) return '';
+                    const estimate = await navigator.storage.estimate();
+                    if (!Number.isFinite(estimate.usage) || !Number.isFinite(estimate.quota)) return '';
+                    const mb = value => (value / (1024 * 1024)).toFixed(1);
+                    return `（浏览器本机存储约已用 ${mb(estimate.usage)} / ${mb(estimate.quota)} MB）`;
+                } catch (error) { return ''; }
+            }
+
+            function imageStorageError(error) {
+                const message = String(error?.message || '本机存储不可用');
+                return /quota|space|storage/i.test(message) ? '浏览器本机存储额度不足；请释放浏览器空间后重试。' : message;
+            }
+
+            function putAudioRecord(record) {
+                return openMediaDB().then(db => new Promise((resolve, reject) => {
+                    const transaction = db.transaction('media', 'readwrite');
+                    transaction.objectStore('media').put(record, 'backgroundAudio');
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = () => reject(transaction.error || new Error('写入本机音乐失败'));
+                    transaction.onabort = () => reject(transaction.error || new Error('本机音乐存储已取消'));
+                }));
+            }
+
+            function getAudioRecord() {
+                return openMediaDB().then(db => new Promise((resolve, reject) => {
+                    const transaction = db.transaction('media', 'readonly');
+                    const request = transaction.objectStore('media').get('backgroundAudio');
+                    request.onsuccess = () => resolve(request.result || null);
+                    request.onerror = () => reject(request.error || new Error('读取本机音乐失败'));
+                }));
+            }
+
+            function deleteAudioRecord() {
+                return openMediaDB().then(db => new Promise((resolve, reject) => {
+                    const transaction = db.transaction('media', 'readwrite');
+                    transaction.objectStore('media').delete('backgroundAudio');
+                    transaction.oncomplete = () => resolve();
+                    transaction.onerror = () => reject(transaction.error || new Error('删除本机音乐失败'));
+                }));
+            }
+
+            function setAudioStatus(message, error = false, sticky = false) {
+                let status = document.getElementById('audioStatus');
+                if (!status) {
+                    status = document.createElement('div');
+                    status.id = 'audioStatus';
+                    status.className = 'audio-status';
+                    status.setAttribute('role', 'status');
+                    status.setAttribute('aria-live', 'polite');
+                    document.body.appendChild(status);
+                }
+                status.textContent = message;
+                status.style.borderColor = error ? '#bc7d83' : '';
+                clearTimeout(status._hideTimer);
+                if (!sticky) status._hideTimer = setTimeout(() => status.remove(), 5000);
+            }
+
+            const audioPlayer = document.createElement('audio');
+            audioPlayer.preload = 'metadata';
+            audioPlayer.loop = true;
+            audioPlayer.hidden = true;
+            document.body.appendChild(audioPlayer);
+
+            function attachAudioRecord(record) {
+                if (!record || !record.blob) return false;
+                if (audioObjectUrl) URL.revokeObjectURL(audioObjectUrl);
+                audioObjectUrl = URL.createObjectURL(record.blob);
+                audioPlayer.src = audioObjectUrl;
+                audioPlayer.load();
+                musicBtn.disabled = false;
+                musicBtn.title = `播放背景音乐：${record.name || '已上传音频'}`;
+                return true;
+            }
+
+            function restoreAudio() {
+                getAudioRecord().then(record => {
+                    if (record) {
+                        attachAudioRecord(record);
+                        setAudioStatus(`背景音乐已从本机载入：${record.name || '音频文件'}`);
+                    }
+                }).catch(error => {
+                    setAudioStatus(`${error.message || 'IndexedDB 不可用'}；背景音乐无法可靠保存，请改用支持本机存储的浏览器。`, true, true);
+                });
+            }
+
+            async function deleteGalleryPhoto(id) {
+                if (!editOn) return;
+                const item = state.gallery.find(photo => photo.id === id);
+                if (!item || !confirm(`确定删除“${item.title || '未命名照片'}”这张相册照片？浏览器本机保存的图片也会一并删除。`)) return;
+                const previousGallery = state.gallery;
+                const previousImages = state.img;
+                const metadata = previousImages[id];
+                let storedRecord = null;
+                try {
+                    if (metadata?.key) {
+                        storedRecord = await getImageRecord(metadata.key);
+                        await deleteImageRecord(metadata.key);
+                    }
+                    state.gallery = previousGallery.filter(photo => photo.id !== id);
+                    state.img = {...previousImages};
+                    delete state.img[id];
+                    if (!persistNow()) {
+                        state.gallery = previousGallery;
+                        state.img = previousImages;
+                        if (metadata?.key && storedRecord) await putImageRecord(metadata.key, storedRecord);
+                        renderGallery();
+                        showToast('保存失败，照片已恢复；请检查浏览器本机存储。', true, 7000);
+                        return;
+                    }
+                    const objectUrl = metadata?.key && imageObjectUrls.get(metadata.key);
+                    if (objectUrl) URL.revokeObjectURL(objectUrl);
+                    if (metadata?.key) imageObjectUrls.delete(metadata.key);
+                    renderGallery();
+                    showToast('照片及对应本机图片记录已删除。');
+                } catch (error) {
+                    state.gallery = previousGallery;
+                    state.img = previousImages;
+                    renderGallery();
+                    showToast(`照片未删除：${imageStorageError(error)}`, true, 7000);
+                }
+            }
+
+            async function compressImage(file) {
+                if (file.size > MAX_INPUT_IMAGE_SIZE) throw new Error('原图超过 20 MB，请先缩小后再上传。');
+                let image;
+                const objectUrl = URL.createObjectURL(file);
+                try {
+                    if ('createImageBitmap' in window) image = await createImageBitmap(file);
+                    else image = await new Promise((resolve, reject) => {
+                        const img = new Image();
+                        img.onload = () => resolve(img);
+                        img.onerror = () => reject(new Error('无法读取这张图片'));
+                        img.src = objectUrl;
+                    });
+                    let scale = Math.min(1, 2200 / Math.max(image.width, image.height));
+                    let blob;
+                    for (let attempt = 0; attempt < 9; attempt++) {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = Math.max(1, Math.round(image.width * scale));
+                        canvas.height = Math.max(1, Math.round(image.height * scale));
+                        const context = canvas.getContext('2d');
+                        if (!context) throw new Error('当前浏览器无法压缩图片');
+                        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+                        blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/webp', Math.max(.48, .9 - attempt * .05)));
+                        if (!blob) throw new Error('图片压缩失败');
+                        if (blob.size <= MAX_IMAGE_SIZE) break;
+                        scale *= .84;
+                    }
+                    if (!blob || blob.size > MAX_IMAGE_SIZE) throw new Error('压缩后仍超过单张 2 MB；请换一张较小图片。');
+                    return blob;
+                } finally {
+                    URL.revokeObjectURL(objectUrl);
+                    if (image && typeof image.close === 'function') image.close();
+                }
+            }
+
+            async function uploadImageToTarget(file, target, title = '') {
+                if (!file.type.startsWith('image/')) throw new Error('请选择图片文件。');
+                await imageMigrationReady;
+                const blob = await compressImage(file);
+                const key = `image:${target}:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 7)}`;
+                const record = {blob, name: file.name || '手账照片', type: blob.type, size: blob.size, updatedAt: Date.now()};
+                await putImageRecord(key, record);
+                const previousImages = state.img;
+                const previousGallery = state.gallery;
+                const previousRecord = previousImages[target];
+                state.img = {...previousImages, [target]: {key, name: record.name, type: record.type, size: record.size, updatedAt: record.updatedAt}};
+                if (target !== 'avaA' && target !== 'avaP' && !state.gallery.some(item => item.id === target)) {
+                    state.gallery = [...state.gallery, {id: target, title: title || file.name.replace(/\.[^.]+$/, '') || '新照片', zoom: 100}];
+                    renderGallery();
+                }
+                if (!persistNow()) {
+                    state.img = previousImages;
+                    state.gallery = previousGallery;
+                    renderGallery();
+                    try { await deleteImageRecord(key); } catch (cleanupError) { /* keep the old content; orphan cleanup is non-destructive */ }
+                    throw new Error('图片索引未能保存；原有照片保持不变，请检查浏览器存储空间。');
+                }
+                if (!imageObjectUrls.has(key)) imageObjectUrls.set(key, URL.createObjectURL(blob));
+                renderGallery();
+                displayStoredImage(target, imageObjectUrls.get(key));
+                if (previousRecord?.key && previousRecord.key !== key) {
+                    try { await deleteImageRecord(previousRecord.key); imageObjectUrls.delete(previousRecord.key); }
+                    catch (cleanupError) { showToast('新照片已保存，但旧图片记录未能清理；可继续使用。', true, 6000); }
+                }
+                const estimate = await storageEstimateLabel();
+                showToast(`照片已保存到此浏览器本机${estimate}。`, false, 6000);
+            }
+
+            fileInput.addEventListener('change', async event => {
+                const file = event.target.files && event.target.files[0];
+                const target = uploadTarget;
+                uploadTarget = null;
+                fileInput.value = '';
+                if (!file || !target || !editOn) return;
+                try { await uploadImageToTarget(file, target); }
+                catch (error) { showToast(imageStorageError(error), true, 7000); }
+            });
+            fileInput.addEventListener('cancel', () => { uploadTarget = null; fileInput.value = ''; });
+            document.getElementById('addGalleryPhotos').addEventListener('click', () => { if (editOn) galleryAddInput.click(); });
+            galleryAddInput.addEventListener('change', async event => {
+                const files = Array.from(event.target.files || []);
+                galleryAddInput.value = '';
+                if (!editOn || !files.length) return;
+                for (const file of files) {
+                    const id = `photo-${newId()}`;
+                    try { await uploadImageToTarget(file, id, file.name.replace(/\.[^.]+$/, '')); }
+                    catch (error) { showToast(`${file.name}：${imageStorageError(error)}`, true, 7000); break; }
+                }
+            });
+            galleryAddInput.addEventListener('cancel', () => { galleryAddInput.value = ''; });
+            document.querySelector('#gallery .gallery-grid').addEventListener('click', event => {
+                const remove = event.target.closest('[data-gallery-delete]');
+                if (remove) { deleteGalleryPhoto(remove.dataset.galleryDelete); return; }
+                const card = event.target.closest('.gallery-item');
+                if (!editOn || !card || event.target.closest('.gallery-controls,.editable')) return;
+                uploadTarget = card.dataset.galleryId;
+                fileInput.click();
+            });
+            document.querySelector('#gallery .gallery-grid').addEventListener('input', event => {
+                const slider = event.target.closest('[data-gallery-zoom]');
+                if (slider) {
+                    const id = slider.dataset.galleryZoom;
+                    const record = state.gallery.find(photo => photo.id === id);
+                    const card = slider.closest('.gallery-item');
+                    if (!record || !card) return;
+                    record.zoom = Number(slider.value);
+                    card.querySelector('.gallery-photo').style.setProperty('--photo-zoom', String(record.zoom / 100));
+                    card.querySelector('.gallery-zoom-label').textContent = `缩放 ${record.zoom}%`;
+                    scheduleSave();
+                    return;
+                }
+                const title = event.target.closest('[data-gallery-title]');
+                if (title && editOn) {
+                    const record = state.gallery.find(photo => photo.id === title.dataset.galleryTitle);
+                    if (record) {
+                        record.title = title.textContent.trim();
+                        const image = title.closest('.gallery-item')?.querySelector('.gallery-photo');
+                        if (image) image.alt = record.title || '手账相册照片';
+                        scheduleSave();
+                    }
+                }
+            });
+            audioUploadBtn.addEventListener('click', () => {
+                if (editOn) audioInput.click();
+            });
+            audioInput.addEventListener('change', async event => {
+                const file = event.target.files && event.target.files[0];
+                audioInput.value = '';
+                if (!file || !editOn) return;
+                if (file.type && !file.type.startsWith('audio/')) {
+                    setAudioStatus('请选择 audio/* 音频文件；现有音乐未更改。', true);
+                    return;
+                }
+                try {
+                    const record = {blob: file, name: file.name || '背景音乐', type: file.type || 'application/octet-stream', updatedAt: Date.now()};
+                    await putAudioRecord(record);
+                    attachAudioRecord(record);
+                    state.audio = {name: record.name};
+                    const stored = persistNow();
+                    setAudioStatus(stored ? `音乐已保存到本机：${record.name}` : `音乐 Blob 已存入 IndexedDB：${record.name}；其他页面数据未能保存，请检查空间。`, !stored, !stored);
+                } catch (error) {
+                    setAudioStatus(`音乐保存失败：${error.message || '本机存储不可用'}。原有音频未更改。`, true, true);
+                }
+            });
+            audioInput.addEventListener('cancel', () => { audioInput.value = ''; });
+
+            document.getElementById('avatar-academic').addEventListener('click', event => {
+                if (!editOn || event.target.closest('.editable')) return;
+                uploadTarget = 'avaA';
+                fileInput.click();
+            });
+            document.getElementById('avatar-personal').addEventListener('click', event => {
+                if (!editOn || event.target.closest('.editable')) return;
+                uploadTarget = 'avaP';
+                fileInput.click();
+            });
+
+
+            document.addEventListener('input', event => {
+                const galleryTitle = event.target.closest('[data-gallery-title]');
+                if (galleryTitle && editOn) {
+                    const record = state.gallery.find(photo => photo.id === galleryTitle.dataset.galleryTitle);
+                    if (record) record.title = galleryTitle.textContent.trim();
+                    scheduleSave();
+                    return;
+                }
+                const entryField = event.target.closest('[data-entry-field]');
+                if (entryField && editOn) {
+                    const kind = entryField.dataset.entryKind;
+                    const record = getRecord(kind, entryField.dataset.entryId);
+                    if (!record) return;
+                    const value = entryField.textContent;
+                    const field = entryField.dataset.entryField;
+                    if (field === 'work-title' || field === 'journal-title' || field === 'private-title') record.title = value;
+                    else if (field === 'work-date' || field === 'journal-date' || field === 'private-date') record.date = value;
+                    else if (field === 'work-summary' || field === 'journal-summary' || field === 'private-summary') record.summary = value;
+                    else if (field === 'tag') record.tags[Number(entryField.dataset.tagIndex)] = value;
+                    scheduleSave();
+                    return;
+                }
+                if (editOn && event.target.classList.contains('editable')) scheduleSave();
+            });
+            document.addEventListener('click', event => {
+                const card = event.target.closest('.entry-card');
+                if (!card || event.target.closest('[contenteditable="true"],[data-card-action]')) return;
+                openEntryDetail(card.dataset.entryKind, card.dataset.entryId);
+            });
+            document.addEventListener('keydown', event => {
+                const card = event.target.closest('.entry-card');
+                if (card && event.target === card && (event.key === 'Enter' || event.key === ' ')) {
+                    event.preventDefault();
+                    openEntryDetail(card.dataset.entryKind, card.dataset.entryId);
+                }
+            });
+
+            editToggle.addEventListener('click', () => {
+                if (editOn) setEditMode(false);
+                else openPasswordDialog();
+            });
+            saveBtn.addEventListener('click', () => {
+                const success = persistNow();
+                showToast(success ? '已保存到当前浏览器。' : '保存失败，请检查浏览器本机存储空间。', !success);
+            });
+            resetBtn.addEventListener('click', async () => {
+                if (!confirm('确认重置？将清除本网页在本机浏览器保存的文字、图片、条目、主题与音乐。')) return;
+                if (!confirm('这是第二次确认：确定永久清除这些本机修改并恢复初始内容吗？')) return;
+                try { await deleteAudioRecord(); } catch (error) { setAudioStatus(`音乐记录未能删除：${error.message || '未知错误'}`, true, true); }
+                try {
+                    const imageKeys = Object.values(state.img).filter(value => value && typeof value === 'object' && value.key).map(value => value.key);
+                    await Promise.all(imageKeys.map(deleteImageRecord));
+                } catch (error) { showToast(`部分图片记录未能清除，存档保持不变：${imageStorageError(error)}`, true, 7000); return; }
+                try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem('theme'); } catch (error) { showToast('无法清除本机存档。', true); return; }
+                location.reload();
+            });
+            themeBtn.addEventListener('click', () => setTheme(state.theme === 'dark' ? 'light' : 'dark'));
+            musicBtn.addEventListener('click', async () => {
+                if (!audioPlayer.src) {
+                    setAudioStatus('尚未添加背景音乐。先进入编辑模式，再点导航栏的 ⇧ 上传音频。');
+                    return;
+                }
+                if (audioPlayer.paused) {
+                    try {
+                        await audioPlayer.play();
+                        musicBtn.textContent = '❚❚';
+                        musicBtn.title = '暂停背景音乐';
+                        musicBtn.setAttribute('aria-label', '暂停背景音乐');
+                    } catch (error) {
+                        setAudioStatus('浏览器无法播放该音频；请确认文件格式受支持。', true);
+                    }
+                } else {
+                    audioPlayer.pause();
+                    musicBtn.textContent = '♫';
+                    musicBtn.title = '播放背景音乐';
+                    musicBtn.setAttribute('aria-label', '播放背景音乐');
+                }
+            });
+            audioPlayer.addEventListener('pause', () => {
+                musicBtn.textContent = '♫';
+                musicBtn.title = '播放背景音乐';
+                musicBtn.setAttribute('aria-label', '播放背景音乐');
+            });
+            audioPlayer.addEventListener('play', () => {
+                musicBtn.textContent = '❚❚';
+                musicBtn.title = '暂停背景音乐';
+                musicBtn.setAttribute('aria-label', '暂停背景音乐');
+            });
+
+            document.querySelectorAll('.tab-btn').forEach(button => button.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(item => item.classList.toggle('active', item === button));
+                document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.toggle('active', pane.id === button.dataset.tab));
+                state.tab = button.dataset.tab;
+                scheduleSave();
+            }));
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => anchor.addEventListener('click', event => {
+                event.preventDefault();
+                const target = document.querySelector(anchor.getAttribute('href'));
+                if (target) window.scrollTo({top: target.offsetTop - 80, behavior: 'smooth'});
+            }));
+            window.addEventListener('scroll', () => {
+                document.getElementById('navbar').style.boxShadow = window.scrollY > 50 ? '0 2px 18px rgba(160,140,140,0.08)' : 'none';
+            }, {passive: true});
+
+            function setPrivateJournalLocked(locked) {
+                const lockBox = document.getElementById('privateLock');
+                const privateContent = document.getElementById('privateContent');
+                lockBox.style.display = locked ? '' : 'none';
+                privateContent.classList.toggle('unlocked', !locked);
+                if (locked) document.getElementById('privatePassword').value = '';
+            }
+
+            document.getElementById('lockPrivateBtn').addEventListener('click', () => {
+                setPrivateJournalLocked(true);
+                showToast('私密日记已重新锁定。');
+            });
+
+            window.unlockPrivate = function unlockPrivate() {
+                const inputVal = document.getElementById('privatePassword').value;
+                let pwd = DEFAULT_PWD;
+                try { pwd = localStorage.getItem('private_pwd') || DEFAULT_PWD; } catch (error) { /* default password remains available */ }
+                if (inputVal === pwd) setPrivateJournalLocked(false);
+                else showToast('私密手账密码错误，请重试。', true);
+            };
+
+            readStoredData();
+            const defaults = makeDefaultEntries();
+            state.entries = {
+                works: normalizeEntries(saved.entries?.works, defaults.works),
+                journal: normalizeEntries(saved.entries?.journal, defaults.journal),
+                privateJournal: normalizeEntries(saved.entries?.privateJournal, makeDefaultPrivateEntries())
+            };
+            state.gallery = normalizeGallery(saved.gallery, makeDefaultGallery());
+            setTheme(state.theme, false);
+            document.querySelectorAll('.tab-btn').forEach(button => button.classList.toggle('active', button.dataset.tab === state.tab));
+            document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.toggle('active', pane.id === state.tab));
+            renderEntries();
+            renderGallery();
+            setEditablesEnabled(false);
+            imageMigrationReady = migrateLegacyImages();
+            imageMigrationReady.then(() => restoreImages());
+            restoreAudio();
+        })();
+    </script>
+</body>
+</html>
