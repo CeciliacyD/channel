@@ -217,6 +217,10 @@
         .private-content {display:none;max-width:720px;margin:0 auto;}
         .private-content.unlocked {display:block;}
         .private-lock-actions {display:flex;justify-content:flex-end;margin:0 0 8px;}
+        .cloud-panel {max-width:720px;margin:-24px auto 42px;padding:20px 24px;background:var(--paper);border:1px solid var(--border-line);border-radius:14px;box-shadow:var(--shadow-soft);}
+        .cloud-panel p {color:var(--text-light);font-size:.9rem;overflow-wrap:anywhere;}
+        .cloud-panel .dialog-actions {margin-top:10px;}
+        [hidden] {display:none !important;}
         /* Gallery相册 手账拼贴网格 */
         #gallery {padding:110px 0;}
         .gallery-grid {display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
@@ -265,7 +269,7 @@
     </style>
 </head>
 <body>
-    <div class="edit-tip">✏️ 编辑模式已开启｜文字、条目与图片会自动保存在本机；退出请点 ✏️</div>
+    <div class="edit-tip">✏️ 本机草稿编辑模式｜未配置云端时，公开内容只保存在当前浏览器。</div>
     <nav id="navbar">
         <div class="container nav-wrap">
             <a href="#home" class="nav-logo editable">Cecilia</a>
@@ -420,26 +424,23 @@
 
     <section id="private-journal">
         <div class="container">
-            <h2 class="section-title editable">Private Journal</h2>
-            <div class="private-lock-box" id="privateLock">
-                <h3 class="editable">🔒 私密手账</h3>
-                <input type="password" id="privatePassword" placeholder="输入密码解锁">
-                <button onclick="unlockPrivate()">解锁查看</button>
-            </div>
-            <div class="private-content" id="privateContent">
-                <div class="private-lock-actions"><button class="soft-button" id="lockPrivateBtn" type="button">重新锁定</button></div>
-                <div class="journal-list">
-                    <div class="journal-item">
-                        <div class="journal-date editable">私密 · 2026.09.10</div>
-                        <h4 class="journal-title editable">只写给自己的话</h4>
-                        <p class="journal-excerpt editable">这是只属于你的空间，存放所有不想对外展示的情绪、思绪与碎念。</p>
-                    </div>
-                    <div class="journal-item">
-                        <div class="journal-date editable">私密 · 2026.08.25</div>
-                        <h4 class="journal-title editable">梦境碎片存档</h4>
-                        <p class="journal-excerpt editable">把醒来依旧清晰的梦境记录下来，时间久了就成为平行世界的记忆。</p>
-                    </div>
+            <div class="cloud-panel" aria-live="polite">
+                <p id="cloudStatus">正在检查本地与云端配置……</p>
+                <div class="dialog-actions">
+                    <button class="soft-button" id="adminLoginBtn" type="button">管理者登录</button>
+                    <button class="soft-button" id="publishLocalBtn" type="button" hidden>发布本机公开内容</button>
+                    <button class="soft-button" id="migratePhotosBtn" type="button" hidden>迁移本机照片到公开相册</button>
+                    <button class="soft-button" id="migratePrivateBtn" type="button" hidden>主动迁移本机私密日记</button>
+                    <button class="soft-button" id="adminSignOutBtn" type="button" hidden>退出管理者登录并锁定</button>
                 </div>
+            </div>
+            <div class="private-lock-box" id="privateLock">
+                <h3>🔒 私密手账</h3>
+                <p>私密日记仅在 Supabase 管理者身份验证通过后，从独立私密表读取。未配置云端或未登录时不会载入日记。</p>
+            </div>
+            <div class="private-content" id="privateContent" aria-label="已认证管理者的私密日记">
+                <div class="private-lock-actions"><button class="soft-button" id="lockPrivateBtn" type="button">重新锁定并退出</button></div>
+                <div class="journal-list"></div>
             </div>
         </div>
     </section>
@@ -469,12 +470,12 @@
         </div>
     </footer>
 
+    <script src="./supabase-config.js"></script>
     <script>
         (() => {
             'use strict';
             const STORAGE_KEY = 'handnote_cecilia_site';
             const MEDIA_DB = 'handnote_cecilia_media';
-            const DEFAULT_PWD = 'cecilia2026';
             const MAX_IMAGE_SIZE = 2 * 1024 * 1024;
             const MAX_INPUT_IMAGE_SIZE = 20 * 1024 * 1024;
             const root = document.documentElement;
@@ -500,6 +501,16 @@
             let imageMigrationReady = Promise.resolve(true);
             const imageObjectUrls = new Map();
             const state = {text: {}, img: {}, gallery: [], entries: {works: [], journal: [], privateJournal: []}, theme: 'light', tab: 'academic'};
+            const config = window.SUPABASE_CONFIG || {};
+            const configured = typeof config.url === 'string' && /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(config.url) && !/YOUR[-_ ]|PLACEHOLDER/i.test(config.url) && typeof config.anonKey === 'string' && config.anonKey.length > 30 && !/YOUR[-_ ]|PLACEHOLDER/i.test(config.anonKey);
+            const bucketName = typeof config.publicBucket === 'string' && config.publicBucket.trim() ? config.publicBucket.trim() : 'public-images';
+            let supabase = null;
+            let adminUser = null;
+            let cloudHasPublished = false;
+            let cloudReadSucceeded = false;
+            let authCheckToken = 0;
+            let cloudSaveTimer = null;
+            let privateSaveTimer = null;
 
             function showToast(message, isError = false, duration = 3200) {
                 let toast = document.getElementById('siteToast');
@@ -518,25 +529,213 @@
                 toastTimer = setTimeout(() => { toast.hidden = true; }, duration);
             }
 
+            function updateCloudStatus(message) {
+                document.getElementById('cloudStatus').textContent = message;
+                document.getElementById('adminLoginBtn').hidden = !configured || Boolean(adminUser);
+                document.getElementById('publishLocalBtn').hidden = !configured || !adminUser || !cloudReadSucceeded || cloudHasPublished;
+                document.getElementById('migratePhotosBtn').hidden = !configured || !adminUser;
+                document.getElementById('migratePrivateBtn').hidden = !configured || !adminUser;
+                document.getElementById('adminSignOutBtn').hidden = !configured || !adminUser;
+            }
+
+            function cloudPayload() {
+                const payload = getPersistedData();
+                const publicImages = {};
+                Object.entries(state.img).forEach(([id, image]) => {
+                    if (image && typeof image === 'object' && typeof image.path === 'string') publicImages[id] = {path: image.path};
+                });
+                payload.img = publicImages;
+                payload.entries = {works: state.entries.works, journal: state.entries.journal};
+                return payload;
+            }
+
+            function applyCloudPayload(payload) {
+                if (!payload || typeof payload !== 'object') return;
+                if (payload.pageText && typeof payload.pageText === 'object') {
+                    staticEditables.forEach((el, index) => {
+                        const key = `p${index}`;
+                        if (Object.prototype.hasOwnProperty.call(payload.pageText, key)) el.innerHTML = sanitizeEditableHtml(payload.pageText[key]);
+                    });
+                }
+                state.entries.works = normalizeEntries(payload.entries?.works, []);
+                state.entries.journal = normalizeEntries(payload.entries?.journal, []);
+                state.entries.privateJournal = [];
+                state.gallery = normalizeGallery(payload.gallery, []);
+                state.img = {};
+                if (payload.img && typeof payload.img === 'object') {
+                    Object.entries(payload.img).forEach(([id, value]) => {
+                        if (typeof value?.path !== 'string') return;
+                        const publicUrl = supabase.storage.from(bucketName).getPublicUrl(value.path).data.publicUrl;
+                        state.img[id] = {path: value.path, url: publicUrl};
+                    });
+                }
+                state.theme = payload.theme === 'dark' ? 'dark' : 'light';
+                state.tab = payload.tab === 'personal' ? 'personal' : 'academic';
+                setTheme(state.theme, false);
+                document.querySelectorAll('.tab-btn').forEach(button => button.classList.toggle('active', button.dataset.tab === state.tab));
+                document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.toggle('active', pane.id === state.tab));
+                renderEntries();
+                renderGallery();
+                restoreImages();
+            }
+
+            async function saveCloudPublic() {
+                if (!configured || !supabase || !adminUser || !cloudHasPublished) return false;
+                const {error} = await supabase.from('site_state').upsert({id: 'main', content: cloudPayload(), updated_at: new Date().toISOString()});
+                if (error) throw error;
+                return true;
+            }
+
+            async function queueCloudSave() {
+                if (!configured || !adminUser || !cloudHasPublished) return;
+                clearTimeout(cloudSaveTimer);
+                cloudSaveTimer = setTimeout(async () => {
+                    try {
+                        await saveCloudPublic();
+                        updateCloudStatus('公开内容已同步到 Supabase；私密日记保存在独立私密表。');
+                    } catch (error) {
+                        updateCloudStatus(`云端保存失败，浏览器本机草稿仍保留：${error.message || '请求失败'}`);
+                    }
+                }, 700);
+            }
+
+            async function refreshPublicCloud() {
+                if (!supabase) return;
+                const {data, error} = await supabase.from('site_state').select('content').eq('id', 'main').maybeSingle();
+                if (error) {
+                    cloudReadSucceeded = false;
+                    cloudHasPublished = false;
+                    updateCloudStatus(`已配置云端，但读取公开内容失败：${error.message}。为防止覆盖现有内容，首次发布按钮已锁定。`);
+                    return;
+                }
+                cloudReadSucceeded = true;
+                cloudHasPublished = Boolean(data?.content);
+                if (cloudHasPublished) {
+                    applyCloudPayload(data.content);
+                    updateCloudStatus('公开作品、随笔和相册已从云端读取。私密日记不会公开读取。');
+                } else {
+                    updateCloudStatus('云端尚无公开内容；本机存档仍是本地快照，需管理者主动点击“发布本机公开内容”。');
+                }
+                if (adminUser) updateCloudStatus(cloudHasPublished ? '公开内容已从云端载入；管理者编辑会同步保存。' : '尚未发布公开内容；点击“发布本机公开内容”后才会首次写入云端。');
+            }
+
+            async function confirmAdmin(user, checkToken = authCheckToken) {
+                if (!user || !supabase) return false;
+                const {data, error} = await supabase.from('site_admins').select('user_id').eq('user_id', user.id).maybeSingle();
+                if (checkToken !== authCheckToken || !supabase) return false;
+                if (error || !data) {
+                    adminUser = null;
+                    clearPrivateData();
+                    if (editOn) setEditMode(false);
+                    updateCloudStatus(error ? `管理者白名单检查失败：${error.message}` : '此账号不在 site_admins 管理者白名单中。');
+                    return false;
+                }
+                adminUser = user;
+                updateCloudStatus(cloudHasPublished ? '管理者已验证；公开编辑可同步，私密表仅在此认证会话中读取。' : '管理者已验证；首次写入需手动发布本机公开内容。');
+                setEditMode(true);
+                await loadPrivateEntries();
+                return true;
+            }
+
+            async function loadPrivateEntries() {
+                if (!supabase || !adminUser) return;
+                const userId = adminUser.id;
+                const {data, error} = await supabase.from('private_entries').select('id,title,date,summary,body,tags').eq('user_id', userId).order('created_at', {ascending: false});
+                if (error || !adminUser || adminUser.id !== userId) {
+                    clearPrivateData();
+                    showToast(`私密日记读取失败：${error?.message || '登录状态已失效'}`, true, 7000);
+                    return;
+                }
+                state.entries.privateJournal = normalizeEntries(data, []);
+                renderEntries();
+                setPrivateJournalLocked(false);
+            }
+
+            function clearPrivateData() {
+                state.entries.privateJournal = [];
+                document.querySelector('#privateContent .journal-list').replaceChildren();
+                const title = document.getElementById('entryDialogTitle');
+                if (title && document.getElementById('entryModal')?.dataset.entryKind === 'privateJournal') closeEntryDialog();
+                setPrivateJournalLocked(true);
+            }
+
+            function schedulePrivateSave() {
+                if (!adminUser || !supabase) return;
+                clearTimeout(privateSaveTimer);
+                privateSaveTimer = setTimeout(async () => {
+                    const userId = adminUser?.id;
+                    if (!userId || !supabase) return;
+                    try {
+                        const rows = state.entries.privateJournal.map(item => ({...item, user_id: userId}));
+                        const {error} = rows.length ? await supabase.from('private_entries').upsert(rows, {onConflict: 'user_id,id'}) : {error: null};
+                        if (error) throw error;
+                    } catch (error) {
+                        showToast(`私密日记未能保存：${error.message || '请求失败'}`, true, 7000);
+                    }
+                }, 500);
+            }
+
+            async function initializeCloud() {
+                if (!configured) {
+                    updateCloudStatus('当前浏览器本地/云端未配置。公开内容仅保存于此浏览器；私密日记保持锁定。');
+                    return;
+                }
+                try {
+                    const {createClient} = await import('https://esm.sh/@supabase/supabase-js@2');
+                    supabase = createClient(config.url, config.anonKey, {auth: {persistSession: true, autoRefreshToken: true, detectSessionInUrl: true}});
+                    await refreshPublicCloud();
+                    supabase.auth.onAuthStateChange((event, session) => {
+                        if (!session || !adminUser || adminUser.id !== session.user.id) {
+                            const checkToken = ++authCheckToken;
+                            adminUser = null;
+                            clearPrivateData();
+                            if (editOn) setEditMode(false);
+                            if (!session) {
+                                updateCloudStatus(cloudHasPublished ? '公开内容可浏览；管理员已退出，私密日记已清空并锁定。' : '云端尚无公开内容；管理员已退出，本机存档未发布。');
+                            } else {
+                                updateCloudStatus('正在验证新的管理者身份；旧私密内容已立即清空并锁定。');
+                                setTimeout(() => confirmAdmin(session.user, checkToken), 0);
+                            }
+                        }
+                    });
+                    const {data} = await supabase.auth.getSession();
+                    if (data.session) await confirmAdmin(data.session.user, authCheckToken);
+                    else if (!cloudHasPublished) updateCloudStatus('云端尚无公开内容；需要管理者登录后手动发布本机公开内容。');
+                } catch (error) {
+                    supabase = null;
+                    updateCloudStatus(`云端 SDK/连接初始化失败；本机内容不会自动上传：${error.message || '无法加载 Supabase SDK'}`);
+                }
+            }
+
             function readStoredData() {
                 try {
                     const raw = localStorage.getItem(STORAGE_KEY);
                     saved = raw ? JSON.parse(raw) : {};
                     if (!saved || typeof saved !== 'object') saved = {};
+                    if (saved.entries && typeof saved.entries === 'object') {
+                        saved.entries = {...saved.entries};
+                        delete saved.entries.privateJournal;
+                    }
                 } catch (error) {
                     saved = {};
                     showToast('读取本机存档失败；页面仍可浏览，修改可能无法保存。', true, 7000);
                 }
-                if (saved.text) {
+                const savedVersion = Number(saved.version || 0);
+                // Older `text` snapshots used an index that included private diary nodes; never replay them into the public DOM.
+                if (saved.text && savedVersion >= 4) {
                     originalEditables.forEach((el, index) => {
                         const key = `t${index}`;
-                        if (Object.prototype.hasOwnProperty.call(saved.text, key)) el.innerHTML = saved.text[key];
+                        if (Object.prototype.hasOwnProperty.call(saved.text, key)) el.innerHTML = sanitizeEditableHtml(saved.text[key]);
                     });
                 }
+                const journalHeadingIndex = staticEditables.findIndex(el => el.matches('#journal .section-title'));
                 staticEditables.forEach((el, index) => {
-                    const key = `p${index}`;
-                    el.dataset.contentKey = key;
-                    if (saved.pageText && Object.prototype.hasOwnProperty.call(saved.pageText, key)) el.innerHTML = saved.pageText[key];
+                    el.dataset.contentKey = `p${index}`;
+                    // v1–v3 stored eight editable nodes in the private section (heading, lock label, and six fields).
+                    // Offset all later public keys so private note text can never land in a public element.
+                    const oldIndex = savedVersion < 4 && journalHeadingIndex >= 0 && index > journalHeadingIndex ? index + 8 : index;
+                    const key = `p${oldIndex}`;
+                    if (saved.pageText && Object.prototype.hasOwnProperty.call(saved.pageText, key)) el.innerHTML = sanitizeEditableHtml(saved.pageText[key]);
                 });
                 state.img = saved.img && typeof saved.img === 'object' ? saved.img : {};
                 let legacyTheme = 'light';
@@ -569,17 +768,6 @@
                 return {works, journal};
             }
 
-            function makeDefaultPrivateEntries() {
-                return Array.from(document.querySelectorAll('#privateContent .journal-item')).map(item => ({
-                    id: newId(),
-                    date: item.querySelector('.journal-date')?.textContent.trim() || '',
-                    title: item.querySelector('.journal-title')?.textContent.trim() || '未命名私密日记',
-                    summary: item.querySelector('.journal-excerpt')?.textContent.trim() || '',
-                    body: item.querySelector('.journal-excerpt')?.textContent.trim() || '',
-                    tags: []
-                }));
-            }
-
             function normalizeEntries(list, defaults) {
                 if (!Array.isArray(list)) return defaults;
                 return list.filter(item => item && typeof item === 'object').map(item => ({
@@ -607,6 +795,29 @@
                     title: String(item.title || ''),
                     zoom: Math.min(160, Math.max(70, Number(item.zoom) || 100))
                 }));
+            }
+
+            function sanitizeEditableHtml(value) {
+                const template = document.createElement('template');
+                template.innerHTML = String(value ?? '');
+                const allowed = new Set(['B', 'STRONG', 'I', 'EM', 'U', 'BR']);
+                const blocked = new Set(['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'SVG', 'MATH']);
+                const clean = node => {
+                    if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.nodeValue || '');
+                    if (node.nodeType !== Node.ELEMENT_NODE || blocked.has(node.tagName)) return document.createDocumentFragment();
+                    const children = Array.from(node.childNodes, clean);
+                    if (!allowed.has(node.tagName)) {
+                        const fragment = document.createDocumentFragment();
+                        children.forEach(child => fragment.appendChild(child));
+                        return fragment;
+                    }
+                    const element = document.createElement(node.tagName.toLowerCase());
+                    children.forEach(child => element.appendChild(child));
+                    return element;
+                };
+                const output = document.createElement('div');
+                Array.from(template.content.childNodes, clean).forEach(child => output.appendChild(child));
+                return output.innerHTML;
             }
 
             function renderGallery() {
@@ -650,6 +861,7 @@
                     card.append(image, title, controls);
                     const stored = state.img[record.id];
                     if (typeof stored === 'string') { image.src = stored; image.hidden = false; }
+                    else if (stored?.url) { image.src = stored.url; image.hidden = false; }
                     else if (stored?.key && imageObjectUrls.has(stored.key)) { image.src = imageObjectUrls.get(stored.key); image.hidden = false; }
                     card.classList.toggle('has-photo', Boolean(stored));
                     galleryRoot.appendChild(card);
@@ -666,13 +878,13 @@
 
             function getPersistedData() {
                 const pageText = {};
-                staticEditables.forEach((el, index) => { pageText[`p${index}`] = el.innerHTML; });
+                staticEditables.forEach((el, index) => { pageText[`p${index}`] = sanitizeEditableHtml(el.innerHTML); });
                 return {
-                    version: 3,
+                    version: 4,
                     pageText,
                     img: state.img,
                     gallery: state.gallery,
-                    entries: state.entries,
+                    entries: {works: state.entries.works, journal: state.entries.journal},
                     theme: state.theme,
                     tab: state.tab
                 };
@@ -681,6 +893,15 @@
             function persistNow() {
                 try {
                     const data = getPersistedData();
+                    const previousRaw = localStorage.getItem(STORAGE_KEY);
+                    if (previousRaw) {
+                        try {
+                            const previous = JSON.parse(previousRaw);
+                            if (Array.isArray(previous?.entries?.privateJournal)) {
+                                data.entries.privateJournal = previous.entries.privateJournal;
+                            }
+                        } catch (error) { /* keep saving public local drafts without importing malformed private data */ }
+                    }
                     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
                     return true;
                 } catch (error) {
@@ -692,7 +913,10 @@
             function scheduleSave() {
                 clearTimeout(saveTimer);
                 saveTimer = setTimeout(() => {
-                    if (persistNow()) showToast('已自动保存到当前浏览器。');
+                    if (persistNow()) {
+                        queueCloudSave();
+                        showToast(configured && adminUser && cloudHasPublished ? '公开内容已保存到本机并排队同步云端。' : '已自动保存到当前浏览器本机。');
+                    }
                 }, 450);
             }
 
@@ -701,6 +925,7 @@
                 for (const [target, metadata] of Object.entries(state.img)) {
                     let source = '';
                     if (typeof metadata === 'string') source = metadata;
+                    else if (metadata?.url) source = metadata.url;
                     else if (metadata && metadata.key) {
                         try {
                             const record = await getImageRecord(metadata.key);
@@ -745,16 +970,25 @@
                 resetBtn.style.display = editOn ? 'block' : 'none';
                 audioUploadBtn.style.display = editOn ? 'block' : 'none';
                 setEditablesEnabled(editOn);
+                const editTip = document.querySelector('.edit-tip');
+                if (editTip) editTip.textContent = configured && adminUser
+                    ? '☁️ 管理者编辑中｜已发布内容会自动同步；私密日记仅在登录后读取。'
+                    : '✏️ 本机草稿编辑中｜内容只保存在当前浏览器，不会同步到网址。';
                 if (!editOn) {
                     closeEntryDialog();
-                    if (persistNow()) showToast('已退出编辑模式；修改已保存在本机。');
+                    if (persistNow()) {
+                        queueCloudSave();
+                        showToast('已退出编辑模式；本机公开草稿已保存。', false, 5000);
+                    }
+                } else if (configured && adminUser) {
+                    showToast(cloudHasPublished ? '管理员编辑模式已开启；公开改动会自动同步云端。' : '管理员编辑模式已开启；首次公开发布仍需你手动确认。', false, 6000);
                 } else {
-                    showToast('编辑模式已开启，可以修改页面内容；内容保存在当前浏览器。', false, 5000);
+                    showToast('本机草稿编辑模式已开启；未配置云端，不代表安全登录。', false, 6000);
                 }
             }
 
             function canEditEntry(kind) {
-                return editOn && (kind !== 'privateJournal' || document.getElementById('privateContent').classList.contains('unlocked'));
+                return editOn && (kind !== 'privateJournal' || Boolean(adminUser) && document.getElementById('privateContent').classList.contains('unlocked'));
             }
 
             function makeCollectionActions(rootSelector, kind, label) {
@@ -805,8 +1039,16 @@
                 return '随笔';
             }
 
-            function deleteEntry(kind, id) {
+            async function deleteEntry(kind, id) {
                 if (!canEditEntry(kind) || !confirm(`确定删除这条${entryKindLabel(kind)}？此操作无法撤销。`)) return false;
+                if (kind === 'privateJournal') {
+                    const {error} = await supabase.from('private_entries').delete().eq('id', id).eq('user_id', adminUser.id);
+                    if (error) { showToast(`私密日记删除失败：${error.message}`, true, 7000); return false; }
+                    state.entries.privateJournal = state.entries.privateJournal.filter(item => item.id !== id);
+                    renderEntries();
+                    showToast('私密日记已从独立私密表删除。');
+                    return true;
+                }
                 const previous = state.entries[kind];
                 state.entries[kind] = previous.filter(item => item.id !== id);
                 renderEntries();
@@ -816,7 +1058,8 @@
                     showToast('保存失败，条目已恢复；请检查浏览器本机存储。', true, 6000);
                     return false;
                 }
-                showToast('条目已删除并保存到本机。');
+                queueCloudSave();
+                showToast('条目已删除并保存到本机；已发布的公开内容会同步云端。');
                 return true;
             }
 
@@ -944,8 +1187,8 @@
                     edit.addEventListener('click', () => openEntryForm(kind, id, false));
                     const remove = document.createElement('button');
                     remove.type = 'button'; remove.className = 'modal-button danger'; remove.textContent = '删除条目';
-                    remove.addEventListener('click', () => {
-                        if (deleteEntry(kind, id)) closeEntryDialog();
+                    remove.addEventListener('click', async () => {
+                        if (await deleteEntry(kind, id)) closeEntryDialog();
                     });
                     actions.append(edit, remove);
                 }
@@ -953,6 +1196,7 @@
                 close.type = 'button'; close.className = 'modal-button'; close.textContent = '关闭详情';
                 close.addEventListener('click', closeEntryDialog);
                 actions.appendChild(close);
+                entryModal.dataset.entryKind = kind;
                 entryModal.hidden = false;
                 document.body.classList.add('dialog-open');
                 entryModal.querySelector('[data-dialog-close]').focus();
@@ -967,6 +1211,7 @@
                 form.dataset.entryKind = kind;
                 form.dataset.entryId = id;
                 form.dataset.isNew = String(isNew);
+                entryModal.dataset.entryKind = kind;
                 document.getElementById('formHeading').textContent = `${isNew ? '新增' : '编辑'}${entryKindLabel(kind)}`;
                 form.elements.title.value = record.title;
                 form.elements.date.value = record.date;
@@ -988,6 +1233,7 @@
                     form.dataset.isNew = 'false';
                 }
                 entryModal.hidden = true;
+                entryModal.dataset.entryKind = '';
                 document.body.classList.remove('dialog-open');
             }
 
@@ -997,12 +1243,12 @@
             document.addEventListener('keydown', event => {
                 if (event.key === 'Escape' && !entryModal.hidden) closeEntryDialog();
             });
-            document.getElementById('entryForm').addEventListener('submit', event => {
+            document.getElementById('entryForm').addEventListener('submit', async event => {
                 event.preventDefault();
                 const form = event.currentTarget;
                 const kind = form.dataset.entryKind;
                 const record = getRecord(kind, form.dataset.entryId);
-                if (!record) return;
+                if (!record || !canEditEntry(kind)) return;
                 const values = new FormData(form);
                 record.title = String(values.get('title') || '').trim();
                 record.date = String(values.get('date') || '').trim();
@@ -1010,37 +1256,54 @@
                 record.body = String(values.get('body') || '');
                 record.tags = String(values.get('tags') || '').split(/[、,，]/).map(tag => tag.trim()).filter(Boolean);
                 renderEntries();
-                const success = persistNow();
+                let success = true;
+                if (kind === 'privateJournal') {
+                    const {error} = await supabase.from('private_entries').upsert({...record, user_id: adminUser.id}, {onConflict: 'user_id,id'});
+                    success = !error;
+                    if (error) showToast(`私密日记未能保存：${error.message}`, true, 7000);
+                } else {
+                    success = persistNow();
+                    if (success) queueCloudSave();
+                }
+                if (!success) { showToast('条目暂未保存；请检查登录状态或浏览器存储。', true, 5500); return; }
                 form.dataset.isNew = 'false';
                 closeEntryDialog();
-                showToast(success ? '条目已保存到本机。' : '条目暂未写入浏览器存储，请检查存储空间。', !success, 5500);
+                showToast(kind === 'privateJournal' ? '私密日记已写入独立私密表。' : '公开条目已保存到本机。');
             });
 
             function openPasswordDialog() {
+                if (!configured || !supabase) {
+                    showToast('Supabase 未配置或仍在初始化；不能进行管理者登录。', true, 6000);
+                    return;
+                }
                 const layer = document.createElement('div');
                 layer.className = 'dialog-backdrop';
                 layer.id = 'passwordModal';
                 layer.innerHTML = `<section class="dialog-panel" role="dialog" aria-modal="true" aria-labelledby="passwordHeading" style="max-width:420px">
-                    <button class="dialog-close" type="button" aria-label="关闭密码框">×</button>
-                    <h2 id="passwordHeading">进入编辑模式</h2>
-                    <form class="password-form"><label for="editPassword">编辑密码</label><input id="editPassword" type="password" autocomplete="current-password" required>
-                    <p class="password-error" aria-live="polite"></p><div class="dialog-actions"><button class="modal-button primary" type="submit">解锁编辑</button><button class="modal-button" type="button" data-password-cancel>取消</button></div></form>
+                    <button class="dialog-close" type="button" aria-label="关闭登录框">×</button>
+                    <h2 id="passwordHeading">Supabase 管理者登录</h2>
+                    <form class="password-form"><label for="adminEmail">管理者邮箱</label><input id="adminEmail" type="email" autocomplete="username" required>
+                    <label for="adminPassword">管理者密码</label><input id="adminPassword" type="password" autocomplete="current-password" required>
+                    <p class="password-error" aria-live="polite"></p><div class="dialog-actions"><button class="modal-button primary" type="submit">验证并登录</button><button class="modal-button" type="button" data-password-cancel>取消</button></div></form>
                 </section>`;
                 document.body.appendChild(layer);
                 document.body.classList.add('dialog-open');
-                const input = layer.querySelector('#editPassword');
-                input.focus();
+                const email = layer.querySelector('#adminEmail');
+                const password = layer.querySelector('#adminPassword');
+                email.focus();
                 const close = () => { layer.remove(); document.body.classList.remove('dialog-open'); };
                 layer.addEventListener('click', event => { if (event.target === layer || event.target.closest('.dialog-close') || event.target.closest('[data-password-cancel]')) close(); });
-                layer.querySelector('form').addEventListener('submit', event => {
+                layer.querySelector('form').addEventListener('submit', async event => {
                     event.preventDefault();
-                    if (input.value === DEFAULT_PWD) {
-                        close();
-                        setEditMode(true);
-                    } else {
-                        layer.querySelector('.password-error').textContent = '密码不正确，请重试。';
-                        input.select();
+                    const {data, error} = await supabase.auth.signInWithPassword({email: email.value.trim(), password: password.value});
+                    password.value = '';
+                    if (error) {
+                        layer.querySelector('.password-error').textContent = `登录失败：${error.message}`;
+                        return;
                     }
+                    const accepted = await confirmAdmin(data.user);
+                    if (accepted) close();
+                    else layer.querySelector('.password-error').textContent = '账号登录成功，但未通过 site_admins 白名单验证。';
                 });
             }
 
@@ -1245,31 +1508,30 @@
                 const previousGallery = state.gallery;
                 const previousImages = state.img;
                 const metadata = previousImages[id];
-                let storedRecord = null;
                 try {
-                    if (metadata?.key) {
-                        storedRecord = await getImageRecord(metadata.key);
-                        await deleteImageRecord(metadata.key);
-                    }
                     state.gallery = previousGallery.filter(photo => photo.id !== id);
                     state.img = {...previousImages};
                     delete state.img[id];
-                    if (!persistNow()) {
-                        state.gallery = previousGallery;
-                        state.img = previousImages;
-                        if (metadata?.key && storedRecord) await putImageRecord(metadata.key, storedRecord);
-                        renderGallery();
-                        showToast('保存失败，照片已恢复；请检查浏览器本机存储。', true, 7000);
-                        return;
+                    if (!persistNow()) throw new Error('本机存储失败，删除已取消。');
+                    if (configured && adminUser && cloudHasPublished) await saveCloudPublic();
+                    else queueCloudSave();
+                    if (metadata?.path && supabase && adminUser) {
+                        const {error} = await supabase.storage.from(bucketName).remove([metadata.path]);
+                        if (error) showToast('网页相册已更新，但旧云端图片未能清理。', true, 7000);
                     }
-                    const objectUrl = metadata?.key && imageObjectUrls.get(metadata.key);
-                    if (objectUrl) URL.revokeObjectURL(objectUrl);
-                    if (metadata?.key) imageObjectUrls.delete(metadata.key);
+                    if (metadata?.key) {
+                        const objectUrl = imageObjectUrls.get(metadata.key);
+                        if (objectUrl) URL.revokeObjectURL(objectUrl);
+                        imageObjectUrls.delete(metadata.key);
+                        try { await deleteImageRecord(metadata.key); }
+                        catch (error) { showToast('相册已更新，但本机旧图片未能清理。', true, 7000); }
+                    }
                     renderGallery();
-                    showToast('照片及对应本机图片记录已删除。');
+                    showToast(configured && adminUser && cloudHasPublished ? '照片已删除并同步到云端。' : '照片已从本机相册删除。');
                 } catch (error) {
                     state.gallery = previousGallery;
                     state.img = previousImages;
+                    persistNow();
                     renderGallery();
                     showToast(`照片未删除：${imageStorageError(error)}`, true, 7000);
                 }
@@ -1309,17 +1571,27 @@
                 }
             }
 
+            async function uploadCloudImage(blob, target) {
+                if (!configured || !supabase || !adminUser) throw new Error('需要已验证的 Supabase 管理者身份才能上传公开照片。');
+                const path = `${adminUser.id}/${target}/${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}.webp`;
+                const {error} = await supabase.storage.from(bucketName).upload(path, blob, {upsert: false, contentType: blob.type || 'image/webp'});
+                if (error) throw error;
+                return {path, url: supabase.storage.from(bucketName).getPublicUrl(path).data.publicUrl};
+            }
+
             async function uploadImageToTarget(file, target, title = '') {
                 if (!file.type.startsWith('image/')) throw new Error('请选择图片文件。');
+                if (configured && !adminUser) throw new Error('请先使用 Supabase 管理者登录；不会以本机密码代替认证。');
                 await imageMigrationReady;
                 const blob = await compressImage(file);
+                const remote = configured ? await uploadCloudImage(blob, target) : null;
                 const key = `image:${target}:${Date.now().toString(36)}:${Math.random().toString(36).slice(2, 7)}`;
                 const record = {blob, name: file.name || '手账照片', type: blob.type, size: blob.size, updatedAt: Date.now()};
                 await putImageRecord(key, record);
                 const previousImages = state.img;
                 const previousGallery = state.gallery;
                 const previousRecord = previousImages[target];
-                state.img = {...previousImages, [target]: {key, name: record.name, type: record.type, size: record.size, updatedAt: record.updatedAt}};
+                state.img = {...previousImages, [target]: {key, ...(remote || {}), name: record.name, type: record.type, size: record.size, updatedAt: record.updatedAt}};
                 if (target !== 'avaA' && target !== 'avaP' && !state.gallery.some(item => item.id === target)) {
                     state.gallery = [...state.gallery, {id: target, title: title || file.name.replace(/\.[^.]+$/, '') || '新照片', zoom: 100}];
                     renderGallery();
@@ -1329,6 +1601,7 @@
                     state.gallery = previousGallery;
                     renderGallery();
                     try { await deleteImageRecord(key); } catch (cleanupError) { /* keep the old content; orphan cleanup is non-destructive */ }
+                    if (remote && supabase) await supabase.storage.from(bucketName).remove([remote.path]);
                     throw new Error('图片索引未能保存；原有照片保持不变，请检查浏览器存储空间。');
                 }
                 if (!imageObjectUrls.has(key)) imageObjectUrls.set(key, URL.createObjectURL(blob));
@@ -1338,8 +1611,21 @@
                     try { await deleteImageRecord(previousRecord.key); imageObjectUrls.delete(previousRecord.key); }
                     catch (cleanupError) { showToast('新照片已保存，但旧图片记录未能清理；可继续使用。', true, 6000); }
                 }
+                let cloudWarning = '';
+                if (configured && adminUser && supabase) {
+                    try {
+                        if (cloudHasPublished) await saveCloudPublic();
+                        if (previousRecord?.path && previousRecord.path !== remote?.path) {
+                            const {error} = await supabase.storage.from(bucketName).remove([previousRecord.path]);
+                            if (error) cloudWarning = '新照片已保存，但旧云端图片未能清理。';
+                        }
+                    } catch (error) {
+                        queueCloudSave();
+                        cloudWarning = `照片已保存到本机，但云端同步失败：${error.message || '请求失败'}`;
+                    }
+                } else queueCloudSave();
                 const estimate = await storageEstimateLabel();
-                showToast(`照片已保存到此浏览器本机${estimate}。`, false, 6000);
+                showToast(cloudWarning || (remote ? `照片已由你选择上传到公开相册，并保存在本机${estimate}。` : `照片已保存到此浏览器本机${estimate}。`), Boolean(cloudWarning), 7000);
             }
 
             fileInput.addEventListener('change', async event => {
@@ -1451,7 +1737,8 @@
                     else if (field === 'work-date' || field === 'journal-date' || field === 'private-date') record.date = value;
                     else if (field === 'work-summary' || field === 'journal-summary' || field === 'private-summary') record.summary = value;
                     else if (field === 'tag') record.tags[Number(entryField.dataset.tagIndex)] = value;
-                    scheduleSave();
+                    if (kind === 'privateJournal') schedulePrivateSave();
+                    else scheduleSave();
                     return;
                 }
                 if (editOn && event.target.classList.contains('editable')) scheduleSave();
@@ -1471,11 +1758,18 @@
 
             editToggle.addEventListener('click', () => {
                 if (editOn) setEditMode(false);
+                else if (!configured) setEditMode(true);
+                else if (adminUser) setEditMode(true);
                 else openPasswordDialog();
             });
-            saveBtn.addEventListener('click', () => {
+            saveBtn.addEventListener('click', async () => {
                 const success = persistNow();
-                showToast(success ? '已保存到当前浏览器。' : '保存失败，请检查浏览器本机存储空间。', !success);
+                if (success) {
+                    try {
+                        await saveCloudPublic();
+                        showToast(configured && adminUser && cloudHasPublished ? '公开内容已保存到本机并同步云端。' : '已保存到本机；首次云端发布尚未执行。');
+                    } catch (error) { showToast(`本机已保存，云端同步失败：${error.message || '请求失败'}`, true, 7000); }
+                } else showToast('保存失败，请检查浏览器本机存储空间。', true);
             });
             resetBtn.addEventListener('click', async () => {
                 if (!confirm('确认重置？将清除本网页在本机浏览器保存的文字、图片、条目、主题与音乐。')) return;
@@ -1539,30 +1833,93 @@
             function setPrivateJournalLocked(locked) {
                 const lockBox = document.getElementById('privateLock');
                 const privateContent = document.getElementById('privateContent');
-                lockBox.style.display = locked ? '' : 'none';
+                if (!locked && (!configured || !adminUser)) return;
+                lockBox.hidden = !locked;
                 privateContent.classList.toggle('unlocked', !locked);
-                if (locked) document.getElementById('privatePassword').value = '';
+                if (locked) {
+                    state.entries.privateJournal = [];
+                    document.querySelector('#privateContent .journal-list').replaceChildren();
+                    if (entryModal?.dataset.entryKind === 'privateJournal') closeEntryDialog();
+                }
             }
 
-            document.getElementById('lockPrivateBtn').addEventListener('click', () => {
-                setPrivateJournalLocked(true);
-                showToast('私密日记已重新锁定。');
+            document.getElementById('adminLoginBtn').addEventListener('click', openPasswordDialog);
+            document.getElementById('lockPrivateBtn').addEventListener('click', async () => {
+                if (supabase) await supabase.auth.signOut();
+                adminUser = null;
+                clearPrivateData();
+                if (editOn) setEditMode(false);
+                updateCloudStatus('管理者已退出；私密日记已从页面内存与 DOM 清空并锁定。');
+            });
+            document.getElementById('adminSignOutBtn').addEventListener('click', async () => {
+                if (supabase) await supabase.auth.signOut();
+                adminUser = null;
+                clearPrivateData();
+                if (editOn) setEditMode(false);
+                updateCloudStatus('管理者已退出；私密日记已清空并锁定。');
             });
 
-            window.unlockPrivate = function unlockPrivate() {
-                const inputVal = document.getElementById('privatePassword').value;
-                let pwd = DEFAULT_PWD;
-                try { pwd = localStorage.getItem('private_pwd') || DEFAULT_PWD; } catch (error) { /* default password remains available */ }
-                if (inputVal === pwd) setPrivateJournalLocked(false);
-                else showToast('私密手账密码错误，请重试。', true);
-            };
+            document.getElementById('publishLocalBtn').addEventListener('click', async () => {
+                if (!configured || !supabase || !adminUser || cloudHasPublished) return;
+                const firstConfirm = confirm('即将把此浏览器当前的公开页面文字、作品、随笔和相册索引发布到 Supabase。私密日记不会发布；本机旧照片不会自动上传。继续？');
+                if (!firstConfirm || !confirm('再次确认：明确发布本机公开内容到你自己的 Supabase 项目？此操作会创建首次公开云端快照。')) return;
+                try {
+                    const {error} = await supabase.from('site_state').upsert({id: 'main', content: cloudPayload(), updated_at: new Date().toISOString()});
+                    if (error) throw error;
+                    cloudHasPublished = true;
+                    updateCloudStatus('本机公开内容已由管理员明确发布到 Supabase。私密日记仍在独立私密表中。');
+                    showToast('公开内容已发布到云端；本机私密存档未发布。', false, 6500);
+                } catch (error) { showToast(`发布失败，本机存档保持不变：${error.message || '请求失败'}`, true, 8000); }
+            });
+
+            document.getElementById('migratePhotosBtn').addEventListener('click', async () => {
+                if (!adminUser || !supabase || !confirm('仅上传本机媒体库中的旧照片（包括头像和相册）到公开图片桶。此操作会让上传的图片可被访客访问；不会上传音乐或私密日记。继续？')) return;
+                const pending = Object.entries(state.img).filter(([, image]) => !(image && typeof image === 'object' && image.path));
+                if (!pending.length) { showToast('没有待迁移的本机旧照片。'); return; }
+                let count = 0;
+                try {
+                    for (const [target, metadata] of pending) {
+                        let blob;
+                        if (typeof metadata === 'string' && metadata.startsWith('data:image/')) blob = await dataURLToBlob(metadata);
+                        else if (metadata?.key) {
+                            const local = await getImageRecord(metadata.key);
+                            if (!local?.blob) throw new Error(`本机照片 ${target} 无法读取。`);
+                            blob = local.blob;
+                        } else continue;
+                        const remote = await uploadCloudImage(blob, target);
+                        state.img[target] = {...(typeof metadata === 'object' ? metadata : {}), ...remote};
+                        count++;
+                    }
+                    if (!persistNow()) throw new Error('照片已上传，但本机图片索引未能保存。');
+                    if (cloudHasPublished) await saveCloudPublic();
+                    renderGallery();
+                    await restoreImages();
+                    updateCloudStatus(cloudHasPublished ? `已明确迁移 ${count} 张照片；公开相册索引已同步。` : `已明确上传 ${count} 张照片到公开桶；公开页面尚未首次发布。`);
+                    showToast(`已由你明确迁移 ${count} 张照片到公开图片桶。`, false, 6500);
+                } catch (error) { showToast(`照片迁移中断：${error.message || '上传失败'}；本机照片记录保留。`, true, 8000); }
+            });
+
+            document.getElementById('migratePrivateBtn').addEventListener('click', async () => {
+                if (!adminUser || !supabase || !confirm('仅将此浏览器本机存档中的 privateJournal 条目写入 private_entries 独立私密表，不会发布到公开页面。继续？')) return;
+                try {
+                    const raw = localStorage.getItem(STORAGE_KEY);
+                    const snapshot = raw ? JSON.parse(raw) : {};
+                    const records = normalizeEntries(snapshot?.entries?.privateJournal, []);
+                    if (!records.length) { showToast('本机存档中没有可迁移的私密日记。'); return; }
+                    const rows = records.map(record => ({...record, user_id: adminUser.id}));
+                    const {error} = await supabase.from('private_entries').upsert(rows, {onConflict: 'user_id,id'});
+                    if (error) throw error;
+                    await loadPrivateEntries();
+                    showToast(`已明确迁移 ${rows.length} 条到私密表；未写入公开内容。`, false, 7000);
+                } catch (error) { showToast(`私密日记迁移失败；本机快照未删除：${error.message || '请求失败'}`, true, 8000); }
+            });
 
             readStoredData();
             const defaults = makeDefaultEntries();
             state.entries = {
                 works: normalizeEntries(saved.entries?.works, defaults.works),
                 journal: normalizeEntries(saved.entries?.journal, defaults.journal),
-                privateJournal: normalizeEntries(saved.entries?.privateJournal, makeDefaultPrivateEntries())
+                privateJournal: []
             };
             state.gallery = normalizeGallery(saved.gallery, makeDefaultGallery());
             setTheme(state.theme, false);
@@ -1574,6 +1931,7 @@
             imageMigrationReady = migrateLegacyImages();
             imageMigrationReady.then(() => restoreImages());
             restoreAudio();
+            initializeCloud();
         })();
     </script>
 </body>

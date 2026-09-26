@@ -1,7 +1,7 @@
 -- 温柔手账小天地：Supabase Free 云同步基础 schema
 -- 在你自己创建的 Supabase 项目 SQL Editor 中人工执行；本文件不会自动运行。
 -- 设计约定：前端只提交公开字段到 site_state.content；私密条目只进 private_entries。
--- RLS 与 GRANT 必须同时设置：policy 本身不会撤销 public-schema 的默认表权限。
+-- 对本文件创建的 public-schema 表，RLS 与 GRANT 必须同时设置；Storage 另在 Dashboard 配置。
 
 create table if not exists public.site_state (
     id text primary key check (id = 'main'),
@@ -155,57 +155,10 @@ create policy private_entries_admin_delete_own
         and exists (select 1 from public.site_admins a where a.user_id = (select auth.uid()))
     );
 
--- 公共相册：所有访客可读；写入、更新和删除仅限 site_admins 白名单内的登录账号，
--- 且对象必须位于该用户自己的 UID 前缀下（前端使用 <auth.uid()>/<photo-id>/...）。
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('public-images', 'public-images', true, 2097152, array['image/jpeg', 'image/png', 'image/webp', 'image/gif'])
-on conflict (id) do update set
-    public = excluded.public,
-    file_size_limit = excluded.file_size_limit,
-    allowed_mime_types = excluded.allowed_mime_types;
-
-alter table storage.objects enable row level security;
-revoke all on table storage.objects from PUBLIC, anon, authenticated;
-grant select on table storage.objects to anon, authenticated;
-grant insert, update, delete on table storage.objects to authenticated;
-
-drop policy if exists public_images_visitor_read on storage.objects;
-drop policy if exists public_images_admin_insert on storage.objects;
-drop policy if exists public_images_admin_update on storage.objects;
-drop policy if exists public_images_admin_delete on storage.objects;
-
-create policy public_images_visitor_read
-    on storage.objects for select to anon, authenticated
-    using (bucket_id = 'public-images');
-
-create policy public_images_admin_insert
-    on storage.objects for insert to authenticated
-    with check (
-        bucket_id = 'public-images'
-        and (storage.foldername(name))[1] = (select auth.uid())::text
-        and exists (select 1 from public.site_admins a where a.user_id = (select auth.uid()))
-    );
-
-create policy public_images_admin_update
-    on storage.objects for update to authenticated
-    using (
-        bucket_id = 'public-images'
-        and (storage.foldername(name))[1] = (select auth.uid())::text
-        and exists (select 1 from public.site_admins a where a.user_id = (select auth.uid()))
-    )
-    with check (
-        bucket_id = 'public-images'
-        and (storage.foldername(name))[1] = (select auth.uid())::text
-        and exists (select 1 from public.site_admins a where a.user_id = (select auth.uid()))
-    );
-
-create policy public_images_admin_delete
-    on storage.objects for delete to authenticated
-    using (
-        bucket_id = 'public-images'
-        and (storage.foldername(name))[1] = (select auth.uid())::text
-        and exists (select 1 from public.site_admins a where a.user_id = (select auth.uid()))
-    );
+-- Storage is a Supabase-managed schema. Do not ALTER/GRANT/REVOKE storage.objects here:
+-- its table owner is platform-managed and hosted SQL Editor may reject ownership changes.
+-- Create bucket public-images and its visitor-read / whitelist-admin write policies in
+-- Dashboard > Storage after creating and seeding the admin account.
 
 -- 管理员白名单初始 seed（以下只是模板，先在 Authentication > Users 创建用户，再手动执行）：
 -- insert into public.site_admins (user_id)
@@ -214,9 +167,9 @@ create policy public_images_admin_delete
 -- 确认只命中你本人创建的管理账号；不要给 anon/authenticated 授予 site_admins 写权限。
 
 -- 使用要点：
--- 1) anon 只有 site_state SELECT 和公开桶对象 SELECT；没有任何表/存储写权限。
--- 2) authenticated 即使获得 table GRANT，也必须通过 RLS 白名单才能写公开内容/公开图片；
+-- 1) anon 只能读取 site_state；不能写公开内容，也不能访问 private_entries。
+-- 2) authenticated 即使获得 table GRANT，也必须通过 site_admins 白名单才能写公开内容；
 --    private_entries 还必须满足 user_id = auth.uid()。
--- 3) RLS 不代替 GRANT。为每个暴露表显式撤销并授予操作权限；每个操作使用独立 policy。
+-- 3) RLS 不代替 GRANT。对本文件创建的 public 表逐项撤销并授予必要权限。
 -- 4) 管理员检查只从 policy 查询 site_admins；site_admins 自身 policy 不回查其他业务表，因此不递归。
--- 5) SQL 只创建 schema / bucket 和策略，不创建项目、不建 Auth 用户、不上传内容。
+-- 5) 本文件只创建 public-schema 表与策略；Storage 桶和对象策略在 Supabase Dashboard 配置。

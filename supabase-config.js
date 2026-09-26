@@ -4,7 +4,7 @@
  * Never put a service_role or secret key in this file.
  */
 window.SUPABASE_CONFIG = {
-    url: 'https://YOUR-PROJECT.supabase.co',
-    anonKey: 'YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY',
+    url: 'https://yqqgxciszyrezmfskgpc.supabase.co',
+    anonKey: 'sb_publishable_2Q6NXB-A5IKApjHMWvouWA_NveNAyOz',
     publicBucket: 'public-images'
 };
